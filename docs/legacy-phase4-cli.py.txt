@@ -1,0 +1,651 @@
+import subprocess as sp
+import pymysql
+import pymysql.cursors
+
+def addStudent():
+    try:
+        # Takes student details as input
+        row = {}
+        print("Enter new student's details: ")
+
+        row["Student_ID"] = int(input("Student ID: "))
+        name = input("Name (First Last): ").split(' ')
+        name = input("Name (First Last): ").split(' ')
+        row["First_Name"] = name[0]
+        row["Last_Name"] = name[-1]
+        row["Date_of_birth"] = input("DOB(yyyy-mm-dd)(yyyy-mm-dd): ")
+        row["Contact"] = input("Contact: ")
+        row["Department"] = input("Department: ")
+        row["Course_Year"] = input("Course Year: ")
+        row["Credits_done"] = int(input("Credits Done: "))
+        row["Assigned_Sport"] = int(input("Assigned Sport: "))
+        row["Attendence"] = int(input("Attendence: "))
+        row["Assigned_Sport"] = int(input("Assigned Sport: "))
+        row["Attendence"] = int(input("Attendence: "))
+
+        # Insert into STUDENT_PERSONAL_DETAILS table
+        query1 = "INSERT INTO STUDENT_PERSONAL_DETAILS(Student_ID, First_Name, Last_Name, Date_of_birth, Contact) VALUES (%d, '%s', '%s', '%s', %s)" % (
+            row["Student_ID"], row["First_Name"], row["Last_Name"], row["Date_of_birth"], row["Contact"])
+
+        print(query1)
+        cur.execute(query1)
+
+        # Insert into STUDENT_ACAD_DETAILS table
+        query2 = "INSERT INTO STUDENT_ACAD_DETAILS(Student_ID, Department, Course_Year, Credits_done) VALUES (%d, '%s', '%s', %d)" % (
+            row["Student_ID"], row["Department"], row["Course_Year"], row["Credits_done"])
+
+        print(query2)
+        cur.execute(query2)
+
+        # Insert into STUDENT_SPORTS_DETAILS table
+        query3 = "INSERT INTO STUDENT_SPORT_DETAILS(Student_ID, Assigned_Sport, Attendence) VALUES (%d, '%d', %d)" % (
+            row["Student_ID"], row["Assigned_Sport"], row["Attendence"])
+
+        print(query3)
+        cur.execute(query3)
+
+        con.commit()
+        print("Inserted Into Database")
+
+    except Exception as e:
+        con.rollback()
+        print("Failed to insert into the database")
+        print("Error:", e)
+
+    return
+
+
+def addStaff():
+    try:
+        # Takes staff details as input
+        row = {}
+        print("Enter new staff's details: ")
+
+        row["Staff_ID"] = int(input("Staff ID: "))
+        name = input("Name (First Last): ").split(' ')
+        row["First_Name"] = name[0]
+        row["Last_Name"] = name[-1]
+        row["Contact"] = input("Contact: ")
+        #  Type Total_Salary pending salary
+        row["Join_Date"] = input("Join date:")
+        row["Type"] = input("Type:")
+        row["Total_Salary"] = int(input("Total Salary: "))
+        row["pending_salary"] = int(input("Pending Salary:"))
+        
+        # Sport_ID Position supervsor
+        row["Sport_ID"] = int(input("Sport ID: "))
+        row["Position"] = input("Position: ")
+        row["Supervisor"] = int(input("Supervisor: "))
+        # Day Time Work
+        row["Day"] = input("Day: ")
+        row["Time"] = input("Time: ")
+        row["Work"] = input("Work: ")
+
+        # Insert into STAFF_PERSONAL_DETAILS table
+        query1 = "INSERT INTO STAFF_DETAILS(Staff_ID, First_Name, Last_Name,Contact) VALUES ('%d', '%s', '%s', '%s')" % (
+            row["Staff_ID"], row["First_Name"], row["Last_Name"],row["Contact"])
+
+        print(query1)
+        cur.execute(query1)
+
+        # Insert into STAFF_ACAD_DETAILS table
+        query2 = "INSERT INTO STAFF_PROFESSIONAL(Staff_ID, Join_Date,Type, Total_Salary,Pending_salary) VALUES('%d','%s','%s','%d','%d')" % (
+            row["Staff_ID"], row["Join_Date"], row["Type"], row["Total_Salary"],row["pending_salary"]
+        )
+
+        print(query2)
+        cur.execute(query2)
+
+        # Insert into STAFF_WORK_DETAILS table
+        query3 = "INSERT INTO STAFF_POSITION(Staff_ID, Sport_ID,Position,Supervisor) VALUES ('%d', '%d','%s','%d')" % (
+            row["Staff_ID"], row["Sport_ID"], row["Position"],row["Supervisor"])
+
+        print(query3)
+        cur.execute(query3)
+
+        query4 = "INSERT INTO STAFF_TASKS(Staff_ID,Day,Time,Work) VALUES ('%d','%s','%s','%s')" % (
+            row["Staff_ID"], row["Day"], row["Time"],row["Work"])
+        
+        print(query4)
+        cur.execute(query4)
+        con.commit()
+        print("Inserted Into Database")
+
+    except Exception as e:
+        con.rollback()
+        print("Failed to insert into the database")
+        print("Error:", e)
+
+    return
+
+def addFitnessChallenge():
+    try:
+        # Takes fitness challenge details as input
+        row = {}
+        print("Enter new fitness challenge's details: ")
+
+        row["Challenge_ID"] = int(input("Challenge ID: "))
+        row["Challenge_Name"] = input("Challenge Name: ")
+        row["CS_REF_ID"] = int(input("CS_REF_ID: "))
+        row["Section_Name"] = input("Section_Name: ")
+
+        
+        row["Sport_ID"] = int(input("Sport ID: "))
+        row["From_Date"] = input("From Date: ")
+        row["To_Date"] = input("To Date: ")
+        row["Registration_Deadline"] = input("Registration_Deadline: ")
+        row["Location"] = input("Location: ")
+        row["Mentor_ID"] = int(input("Mentor ID: "))
+        row["Winner_ID"] = int(input("Winner ID: "))
+        row["Date"] = input("Date:")
+        row["Prize"] = input("Prize: ")
+
+        # Insert into FITNESS_CHALLENGE table
+        query1 = "INSERT INTO FITNESS_CHALLENGES(Challenge_ID,Challenge_Name) VALUES ('%d','%s')" % (
+            row["Challenge_ID"], row["Challenge_Name"])
+
+        print(query1)
+        cur.execute(query1)
+
+        query2 = "INSERT INTO FITNESS_SECTIONS(CS_REF_ID,Challenge_ID,Section_Name) VALUES ('%d','%d','%s')" % (
+            row["CS_REF_ID"], row["Challenge_ID"],row["Section_Name"])
+        print(query2)
+        cur.execute(query2)
+
+        query3 = "INSERT INTO FITNESS_CHALLENGES_DETAILS(Challenge_ID,From_Date,To_Date,Registration_Deadline)VALUES ('%d','%s','%s','%s')"  % (
+            row["Challenge_ID"], row["From_Date"], row["To_Date"],row["Registration_Deadline"])
+        
+        print(query3)
+        cur.execute(query3)
+
+        query4 = "INSERT INTO FITNESS_SECTIONS_DETAILS(CS_REF_ID,Date,Location) VALUES('%d','%s','%s')" % (
+            row["CS_REF_ID"], row["Date"], row["Location"])
+        
+        print(query4)
+        cur.execute(query4)
+
+        query5 = "INSERT INTO FITNESS_CHALLENGE_MENTORS(CS_REF_ID,Mentor_ID) VALUES('%d','%d')" % (
+            row["CS_REF_ID"],row["Mentor_ID"]
+        )
+
+        print(query5)
+        cur.execute(query5)
+        
+        query6 = "INSERT INTO FITNESS_CHALLENGE_WINNERS(CS_REF_ID,Winner_ID,Prize) VALUES('%d','%d','%s')" % (
+            row["CS_REF_ID"],row["Winner_ID"],row["Prize"]
+        )
+        print(query6)
+        cur.execute(query6)
+
+        con.commit()
+        print("Inserted Into Database")
+
+    except Exception as e:
+        con.rollback()
+        print("Failed to insert into the database")
+        print("Error:", e)
+
+#### DELETE
+
+def removeSport():
+    try:
+        sport_id = int(input("sport_id:"))
+        # Delete from SPORTS
+        query1 = f"DELETE FROM SPORTS WHERE Sport_ID = {sport_id}"
+        cur.execute(query1)
+
+        # Delete from SPORTS_LOACTION
+        query2 = f"DELETE FROM SPORTS_LOCATION WHERE Sport_ID = {sport_id}"
+        cur.execute(query2)
+
+        # Delete from SPORTS_SLOT
+        query3 = f"DELETE FROM SPORTS_SLOT WHERE Sport_ID = {sport_id}"
+        cur.execute(query3)
+
+
+        query4 = f"UPDATE STUDENT_SPORT_DETAILS SET Assigned_Sport = NULL WHERE Assigned_Sport = {sport_id}"
+        cur.execute(query4)
+
+        query5 = f"UPDATE STAFF_POSITION SET Sport_ID = NULL WHERE Sport_ID = {sport_id}"
+        cur.execute(query5)
+
+        query6 = f"UPDATE EQUIPMENT SET Sport_ID = NULL WHERE Sport_ID = {sport_id}"
+        cur.execute(query6)
+
+        con.commit()
+        print(f"Sports with ID {sport_id} removed from the database")
+
+    except Exception as e:
+        con.rollback()
+        print("Failed to insert into the database")
+        print("Error:", e)
+
+def removeEquipment():
+    try:
+        eq_id = int(input("Equipment_Id:"))
+        query1 = f"DELETE FROM EQUIPMENT WHERE Equipment_ID = {eq_id}"
+        cur.execute(query1)
+
+        query2 = f"DELETE FROM EQUIPMENT_MAINTENANCE WHERE Equipment_ID = {eq_id}"
+        cur.execute(query2)
+
+        query3 = f"DELETE FROM EQUIPMENT_REGISTRATION WHERE Equipment_ID = {eq_id}"
+        cur.execute(query3)
+
+        query4 = f"UPDATE FROM EQUIPMENT_FUNDS SET EQUIPMENT_id = NULL WHERE Equipment_ID = {eq_id}"
+        cur.execute(query4)
+
+        con.commit()
+        print(f"Equipment with ID {eq_id} removed from the database")
+    
+    except Exception as e:
+        con.rollback()
+        print("Failed to insert into the database")
+        print("Error:", e)
+
+def liststudents():
+    try:
+        sport_id = int(input("sport_Id:"))
+        
+        query1 = f"SELECT spd.Student_ID,spd.First_Name,spd.Last_Name FROM STUDENT_PERSONAL_DETAILS AS spd,STUDENT_SPORT_DETAILS AS ssd WHERE ssd.Assigned_Sport = {sport_id} AND spd.Student_ID = ssd.Student_ID"
+        check = cur.execute(query1)
+        result_tuples = cur.fetchall()
+        if check > 0 :
+            for row in result_tuples:
+                print(tuple(row.values()))
+        else:
+            con.rollback()
+            print(f"No Sport with {sport_id}")
+        
+        con.commit()
+        
+
+    except Exception as e:
+        con.rollback()
+        print("Failed to insert into the database")
+        print("Error:", e)
+
+def liststaff():
+    try:
+        sport_id = int(input("Sport_Id:"))
+
+        query1 = f"SELECT sd.Staff_ID,sd.First_Name FROM STAFF_DETAILS AS sd,STAFF_POSITION AS sp WHERE sp.Sport_ID = {sport_id} AND sp.Staff_ID = sd.Staff_ID"
+        check = cur.execute(query1)
+        result_tuples = cur.fetchall()
+        if check > 0 :
+            for row in result_tuples:
+                print(tuple(row.values()))
+        else:
+            con.rollback()
+            print(f"No Sport with {sport_id}")
+        
+        con.commit()
+    
+    except Exception as e:
+        con.rollback()
+        print("Failed to insert into the database")
+        print("Error:", e)
+
+
+
+
+
+
+
+# Update
+
+def updateStudent():
+    try:
+        student_id = int(input("Student id:"))
+        new_contact = input("New contact:")
+        new_Attendence = int(input("New Attendence:"))
+        # Update STUDENT_PERSONAL_DETAILS
+        query1 = f"UPDATE STUDENT_PERSONAL_DETAILS SET Contact = '{new_contact}' WHERE Student_ID = {student_id}"
+        check1 = cur.execute(query1)
+        
+
+        # Update STUDENT_SPORTS_DETAILS
+        query2 = f"UPDATE STUDENT_SPORT_DETAILS SET Attendence = {new_Attendence} WHERE Student_ID = {student_id}"
+        check2 = cur.execute(query2)
+        
+
+        if check1 > 0 or check2 > 0:
+            con.commit()
+            print(f"Student with ID {student_id} information updated")
+        else:
+            con.rollback()
+            print(f"Student with ID {student_id} does not exist in the database")
+
+    except Exception as e:
+        con.rollback()
+        print(f"Failed to update student with ID {student_id}")
+        print("Error:", e)
+
+def updateStaff():
+    try:
+        # Update STAFF_DETAILS
+        staff_id = int(input("Staff_id:"))
+        new_contact = input("New contact:")
+        choice = input("Do you want to update the staff's pending salary?:(y/n)")
+        if choice == 'y':
+            new_pending_salary = int(input("New pending salary:"))
+            query1 = f"UPDATE STAFF_PROFESSIONAL SET Pending_salary = {new_pending_salary} WHERE Staff_ID = {staff_id}"
+            cur.execute(query1)
+
+        new_salary = int(input("New Monthly salary:"))
+
+
+        query1 = f"UPDATE STAFF_DETAILS SET Contact = '{new_contact}' WHERE Staff_ID = {staff_id}"
+        check1 = cur.execute(query1)
+        
+
+        # Update STAFF_PROFESSIONAL
+        query2 = f"UPDATE STAFF_PROFESSIONAL SET Total_Salary = {new_salary} WHERE Staff_ID = {staff_id}"
+        
+        check2 = cur.execute(query2)
+        
+        
+        if check1 > 0 or check2 > 0:
+            con.commit()
+            print(f"Staff with ID {staff_id} information updated")
+        else:
+            con.rollback()
+            print(f"Staff with ID {staff_id} does not exist in the database")
+
+
+
+    except Exception as e:
+        con.rollback()
+        print(f"Failed to update staff with ID {staff_id}")
+        print("Error:", e)
+
+def updateFitnessChallenge():
+    try:
+        # Update FITNESS_SECTION_DETAILS
+        challenge_id = int(input("Challenge id:"))
+        new_location = input("New location:")
+        new_prize = input("New prize:")     
+        query1 = f"UPDATE FITNESS_SECTIONS_DETAILS SET Location = '{new_location}' WHERE CS_REF_ID = {challenge_id}"
+        check1 = cur.execute(query1)
+        
+
+        # Update FITNESS_CHALLENGE_WINNERS
+        query2 = f"UPDATE FITNESS_CHALLENGE_WINNERS SET Prize = '{new_prize}' WHERE CS_REF_ID = {challenge_id}"
+        check2 = cur.execute(query2)
+        
+
+        if check1 > 0 or check2 > 0:
+            con.commit()
+            print(f"Fitness Challenge with ID {challenge_id} information updated")
+        
+        else:
+            con.rollback()
+            print(f"Fitness Challenge with ID {challenge_id} does not exist in the database")
+        
+
+   
+
+    except Exception as e:
+        con.rollback()
+        print(f"Failed to update Fitness Challenge with ID {challenge_id}")
+        print("Error:", e)
+
+############################################ Selection ###########################################
+
+def RetrieveSportsDay():
+    try:
+        day = input("Day:")
+        query = (f"SELECT SPORTS.Sport_Name,SPORTS.Sport_ID FROM SPORTS_SLOT , SPORTS WHERE SPORTS_SLOT.Day = '{day}' AND SPORTS.Sport_ID = SPORTS_SLOT.Sport_ID")
+        check = cur.execute(query)
+        result_tuples = cur.fetchall()
+        if check > 0 :
+            for row in result_tuples:
+                print(tuple(row.values()))
+            con.commit()
+        else:
+            con.rollback()
+            print(f"No Sports on {day}")
+        
+        
+    except Exception as e:
+        con.rollback()
+        print(f"Failed to retrieve with sports on {day}")
+        print("Error:", e)
+
+def RetriveEquipment():
+    try:
+        date = input("Date:")
+        query = (f"SELECT Equipment_ID,Status FROM EQUIPMENT_MAINTENANCE WHERE Date = '{date}'")
+        check = cur.execute(query)
+        result_tuples = cur.fetchall()
+        if check > 0 :
+            for row in result_tuples:
+                print(tuple(row.values()))
+            con.commit()
+        else:
+            con.rollback()
+            print(f"No Equipment on {date}")
+        
+    
+    except Exception as e:
+        con.rollback()
+        print(f"Failed to retrieve with equipment on {date}")
+        print("Error:", e)
+
+
+###################################### Aggregate ##################################################
+
+def FundReleased():
+    try:
+        month = int(input("Month:"))
+        query = (f"SELECT SUM(T.Amount) AS TotFund FROM TRANSACTIONS AS T, FUNDS AS F WHERE T.Transaction_ID = F.Transaction_ID AND EXTRACT(MONTH FROM F.Date) = {month}") 
+        check = cur.execute(query)
+        result_tuples = cur.fetchall()
+        if check > 0 :
+            for row in result_tuples:
+                print(tuple(row.values()))
+        else:
+            con.rollback()
+            print(f"No Fund released on {month}")
+        
+        
+    except Exception as e:
+        con.rollback()
+        print(f"Failed to retrieve with funds released on {month}")
+        print("Error:", e)
+
+def Total_Pending_Salary():
+    try:
+        query = f"SELECT SUM(pending_salary) AS Total_Pending_Salary FROM STAFF_PROFESSIONAL"
+        cur.execute(query)
+        result_tuples = cur.fetchall()
+        for row in result_tuples:
+            print(tuple(row.values()))
+        con.commit()
+    
+    except Exception as e:
+        con.rollback()
+        print(f"Failed to retrieve with total pending salary")
+        print("Error:", e)
+    
+
+
+
+
+
+############################################### Search ##############################################
+
+def SearchSportbyName():
+    try:
+        sport_name = input("Sport Name:")
+        query = f"SELECT * FROM SPORTS WHERE Sport_Name = '{sport_name}'"
+        check = cur.execute(query)
+        result_tuples = cur.fetchall()
+
+        if check > 0:
+            for row in result_tuples:
+                print(tuple(row.values()))
+            con.commit()
+        else:
+            con.rollback()
+            print(f"No Sport with {sport_name}")
+
+        
+    except Exception as e:
+        con.rollback()
+        print(f"Failed to retrieve with sports on {sport_name}")
+        print("Error:", e)
+    
+def SearchPartialChallengeName():
+    try:
+        partial_challenge_name = input("Partial Challlenge Name:")
+        query = f"SELECT * FROM FITNESS_CHALLENGES WHERE Challenge_Name LIKE '%{partial_challenge_name}%'"
+        cur.execute(query)
+        result_tuples = cur.fetchall()
+        for row in result_tuples:
+            print(tuple(row.values()))
+        con.commit()
+    
+    except Exception as e:
+        con.rollback()
+        print(f"Failed to retrieve with partial challenge name {partial_challenge_name}")
+        print("Error:", e)
+    
+##############################                 Analysis                       ################################
+
+
+def AvgStudents():
+    try:
+        query = """
+                    SELECT AVG(CountStudents) AS AverageEnrollment
+                    FROM (
+                        SELECT S.Sport_ID, COUNT(St.Student_ID) AS CountStudents
+                        FROM SPORTS AS S
+                        LEFT JOIN STUDENT_SPORT_DETAILS AS St ON S.Sport_ID = St.Assigned_Sport
+                        GROUP BY S.Sport_ID
+                    ) AS Subquery;
+                """
+
+        cur.execute(query)
+        result_tuples = cur.fetchall()
+        for row in result_tuples:
+            print(tuple(row.values()))
+        con.commit()
+    
+    except Exception as e:
+        con.rollback()
+        print(f"Failed to retrieve with average students")
+        print("Error:", e)
+    
+
+
+############################################################################################################
+
+def dispatch(ch):
+    """
+    Function that maps helper functions to option entered
+    """
+
+    if(ch == 1):
+        addStudent()
+    elif(ch == 2):
+        addStaff()
+    elif(ch == 3):
+        addFitnessChallenge()
+    elif(ch == 4):
+        removeSport()
+    elif(ch == 5):
+        removeEquipment()
+    elif(ch == 6):
+        updateStudent()
+    elif(ch == 7):
+        updateStaff()
+    elif(ch == 8):
+        updateFitnessChallenge()
+    elif(ch == 9):
+        liststudents()
+    elif(ch == 10):
+        liststaff()
+    elif(ch == 11):
+        RetrieveSportsDay()
+    elif(ch == 12):
+        RetriveEquipment()
+    elif(ch == 13):
+        FundReleased()
+    elif(ch == 14):
+        Total_Pending_Salary()
+    elif(ch == 15):
+        SearchSportbyName()
+    elif(ch == 16):
+        SearchPartialChallengeName()
+    elif(ch == 17):
+        AvgStudents()
+    elif(ch == 18):
+        exit()
+    
+ 
+    else:
+        print("Error: Invalid Option")
+
+
+# Global
+while(1):
+    tmp = sp.call('clear', shell=True)
+    
+    # Can be skipped if you want to hardcode username and password
+    username = input("Username: ")
+    password = input("Password: ")
+
+    try:
+        # Set db name accordingly which have been create by you
+        # Set host to the server's address if you don't want to use local SQL server 
+        con = pymysql.connect(host='localhost',
+                              port=3306,
+                              user=username,
+                              password=password,
+                              db='PEC',
+                              cursorclass=pymysql.cursors.DictCursor)
+        tmp = sp.call('clear', shell=True)
+
+        if(con.open):
+            print("Connected")
+        else:
+            print("Failed to connect")
+
+        tmp = input("Enter any key to CONTINUE>")
+
+        with con.cursor() as cur:
+            while(1):
+                tmp = sp.call('clear', shell=True)
+                # Here taking example of Employee Mini-world
+                print("1.Add Student ")  # Hire an Employee
+                print("2.Add Staff")  # Fire an Employee
+                print("3.Add Fitness Challenge")  # Promote Employee
+                print("4.Delete Sport")
+                print("5.Delete Equipment")  # Employee Statistics
+                print("6.Update Student Details")
+                print("7.Update Staff Details")
+                print("8.Update Fitness Challenge Details")
+                print("9.List of all students in a sport")
+                print("10.List of all staff in a sport")
+                print("11.Retrieve all sports on a particular day")
+                print("12.Retrieve all equipment on a particular day")
+                print("13.Total Fund Released")
+                print("14.Total Pending Salary")
+                print("15.Details of Sports for a particular sport")
+                print("16.Search Challenges")
+                print("17.Avg Students")
+                print("18.Exit")
+                ch = int(input("Enter choice> "))
+                tmp = sp.call('clear', shell=True)
+                if ch == 18:
+                    exit()
+                else:
+                    dispatch(ch)
+                    tmp = input("Enter any key to CONTINUE>")
+
+    except Exception as e:
+        tmp = sp.call('clear', shell=True)
+        print(e)
+        print("Connection Refused: Either username or password is incorrect or user doesn't have access to database")
+        tmp = input("Enter any key to CONTINUE>")

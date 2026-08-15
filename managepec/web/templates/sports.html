@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+
+{% block title %}Sports - ManagePEC{% endblock %}
+{% block heading %}Sports{% endblock %}
+{% block subheading %}Every sport the centre runs, its venue and its enrolment.{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2>Slots on a day</h2>
+  <p>Day codes are MWF, TTS, SUN and ALL.</p>
+  <form class="inline-form" method="get" action="{{ url_for('pec.sports') }}">
+    <div>
+      <label for="day">Day code</label>
+      <input id="day" name="day" value="{{ day }}" placeholder="MWF">
+    </div>
+    <button class="btn" type="submit">Show</button>
+  </form>
+  {% if on_day is not none %}
+    <div style="margin-top:16px">
+      {{ ui.data_table(['Sport_ID', 'Sport_Name', 'Time', 'Booked'], on_day,
+                       'No sport has a slot on ' ~ day ~ '.') }}
+    </div>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2>Enrolment against capacity</h2>
+  <p>Bars are scaled to the largest roster; the table below has the capacity figures.</p>
+  {% if enrolment %}
+    {{ ui.bar_chart(enrolment, 'Sport_Name', 'Enrolled',
+                    (enrolment | map(attribute='Enrolled') | max) or 1) }}
+  {% else %}
+    <p class="empty">No sports on the books.</p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2>All sports</h2>
+  <p>Retiring a sport keeps every student, staff and equipment record and clears
+     the reference to it.</p>
+  {% if sports %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>ID</th><th>Name</th><th>Capacity</th><th>Participants</th>
+              <th>Location</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for sport in sports %}
+            <tr>
+              <td>{{ sport.Sport_ID }}</td>
+              <td>{{ sport.Sport_Name }}</td>
+              <td>{{ sport.Capacity }}</td>
+              <td>{{ sport.No_of_Participants }}</td>
+              <td>{{ sport.Location | blank }}</td>
+              <td>
+                <form method="post"
+                      action="{{ url_for('pec.retire_sport', sport_id=sport.Sport_ID) }}">
+                  <button class="btn danger" type="submit">Retire</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="empty">No sports on the books.</p>
+  {% endif %}
+</div>
+{% endblock %}

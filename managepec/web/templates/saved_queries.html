@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+
+{% block title %}Saved queries - ManagePEC{% endblock %}
+{% block heading %}Saved queries{% endblock %}
+{% block subheading %}The questions the centre asks most often, with the SQL that answers them.{% endblock %}
+
+{% block content %}
+<div class="preset-list">
+  {% for preset in presets %}
+    <a href="{{ url_for('pec.saved_queries', key=preset.key) }}"
+       class="{{ 'active' if preset.key == chosen.key else '' }}">{{ preset.title }}</a>
+  {% endfor %}
+</div>
+
+<div class="card">
+  <h2>{{ chosen.title }}</h2>
+  <p>{{ chosen.description }}</p>
+  <pre class="sql">{{ chosen.sql }}</pre>
+  {{ ui.data_table(columns, rows, 'This query returned nothing.') }}
+  {% if truncated %}
+    <p class="note">Output was cut off at the row limit.</p>
+  {% endif %}
+</div>
+{% endblock %}

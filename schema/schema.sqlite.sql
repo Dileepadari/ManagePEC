@@ -1,0 +1,298 @@
+-- ManagePEC - Physical Education Centre database schema (SQLite dialect)
+--
+-- Kept deliberately in step with schema.mysql.sql: same table names, same column
+-- names, same constraints. Only the type spellings and the engine/charset
+-- clauses differ. If you change one file, change the other.
+
+PRAGMA foreign_keys = ON;
+
+DROP TABLE IF EXISTS EQUIPMENT_REGISTRATION;
+DROP TABLE IF EXISTS EQUIPMENT_MAINTENANCE;
+DROP TABLE IF EXISTS EQUIPMENT_FUNDS;
+DROP TABLE IF EXISTS FUNDS;
+DROP TABLE IF EXISTS EQUIPMENT;
+DROP TABLE IF EXISTS TRANSACTIONS;
+DROP TABLE IF EXISTS FITNESS_CHALLENGE_WINNERS;
+DROP TABLE IF EXISTS FITNESS_CHALLENGE_MENTORS;
+DROP TABLE IF EXISTS FITNESS_SECTIONS_DETAILS;
+DROP TABLE IF EXISTS FITNESS_SECTIONS;
+DROP TABLE IF EXISTS FITNESS_CHALLENGES_DETAILS;
+DROP TABLE IF EXISTS FITNESS_CHALLENGES;
+DROP TABLE IF EXISTS MEDICAL_HISTORY_DETAILS;
+DROP TABLE IF EXISTS MEDICAL_HISTORY;
+DROP TABLE IF EXISTS SPORTS_SLOT;
+DROP TABLE IF EXISTS SPORTS_LOCATION;
+DROP TABLE IF EXISTS STAFF_TASKS;
+DROP TABLE IF EXISTS STAFF_POSITION;
+DROP TABLE IF EXISTS STAFF_PROFESSIONAL;
+DROP TABLE IF EXISTS STUDENT_HEALTH_DETAILS;
+DROP TABLE IF EXISTS STUDENT_SPORT_DETAILS;
+DROP TABLE IF EXISTS STUDENT_ACAD_DETAILS;
+DROP TABLE IF EXISTS STUDENT_PERSONAL_DETAILS;
+DROP TABLE IF EXISTS STAFF_DETAILS;
+DROP TABLE IF EXISTS SPORTS;
+
+-- ---------------------------------------------------------------- core people
+
+CREATE TABLE STUDENT_PERSONAL_DETAILS (
+  Student_ID    INTEGER     NOT NULL,
+  First_Name    VARCHAR(50) NOT NULL,
+  Last_Name     VARCHAR(50) NOT NULL,
+  Date_of_Birth DATE        NOT NULL,
+  Contact       VARCHAR(15) NOT NULL,
+  PRIMARY KEY (Student_ID)
+);
+
+CREATE TABLE STAFF_DETAILS (
+  Staff_ID   INTEGER     NOT NULL,
+  First_Name VARCHAR(50) NOT NULL,
+  Last_Name  VARCHAR(50) NOT NULL,
+  Contact    VARCHAR(15) NOT NULL,
+  PRIMARY KEY (Staff_ID)
+);
+
+-- --------------------------------------------------------------------- sports
+
+CREATE TABLE SPORTS (
+  Sport_ID           INTEGER      NOT NULL,
+  Sport_Name         VARCHAR(50)  NOT NULL,
+  Capacity           INTEGER      NOT NULL,
+  No_of_Participants INTEGER      NOT NULL DEFAULT 0,
+  Rules_Link         VARCHAR(100),
+  PRIMARY KEY (Sport_ID),
+  CHECK (Capacity > 0),
+  CHECK (No_of_Participants >= 0),
+  CHECK (No_of_Participants <= Capacity)
+);
+
+CREATE TABLE SPORTS_LOCATION (
+  Sport_ID INTEGER     NOT NULL,
+  Trainer  INTEGER,
+  Location VARCHAR(50) NOT NULL,
+  PRIMARY KEY (Sport_ID),
+  FOREIGN KEY (Sport_ID) REFERENCES SPORTS (Sport_ID) ON DELETE CASCADE,
+  FOREIGN KEY (Trainer) REFERENCES STAFF_DETAILS (Staff_ID) ON DELETE SET NULL
+);
+
+-- A student may hold more than one slot, so the key is the whole booking and
+-- not just Student_ID as in the phase-4 dump.
+CREATE TABLE SPORTS_SLOT (
+  Sport_ID   INTEGER    NOT NULL,
+  Student_ID INTEGER    NOT NULL,
+  Day        VARCHAR(5) NOT NULL,
+  Time       TIME       NOT NULL,
+  PRIMARY KEY (Student_ID, Sport_ID, Day, Time),
+  FOREIGN KEY (Sport_ID) REFERENCES SPORTS (Sport_ID) ON DELETE CASCADE,
+  FOREIGN KEY (Student_ID) REFERENCES STUDENT_PERSONAL_DETAILS (Student_ID) ON DELETE CASCADE
+);
+
+-- ------------------------------------------------------------ student details
+
+CREATE TABLE STUDENT_ACAD_DETAILS (
+  Student_ID   INTEGER     NOT NULL,
+  Department   VARCHAR(50) NOT NULL,
+  Course_Year  VARCHAR(50) NOT NULL,
+  Credits_Done INTEGER     NOT NULL DEFAULT 0,
+  PRIMARY KEY (Student_ID),
+  FOREIGN KEY (Student_ID) REFERENCES STUDENT_PERSONAL_DETAILS (Student_ID) ON DELETE CASCADE,
+  CHECK (Credits_Done >= 0)
+);
+
+-- Assigned_Sport is nullable and set to NULL when a sport is retired, so the
+-- student record survives.  The phase-4 dump cascaded here, which deleted the
+-- student outright.
+CREATE TABLE STUDENT_SPORT_DETAILS (
+  Student_ID     INTEGER NOT NULL,
+  Assigned_Sport INTEGER,
+  Attendance     INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (Student_ID),
+  FOREIGN KEY (Student_ID) REFERENCES STUDENT_PERSONAL_DETAILS (Student_ID) ON DELETE CASCADE,
+  FOREIGN KEY (Assigned_Sport) REFERENCES SPORTS (Sport_ID) ON DELETE SET NULL,
+  CHECK (Attendance BETWEEN 0 AND 100)
+);
+
+CREATE TABLE STUDENT_HEALTH_DETAILS (
+  Student_ID   INTEGER      NOT NULL,
+  Health_Issue VARCHAR(100) NOT NULL,
+  PRIMARY KEY (Student_ID),
+  FOREIGN KEY (Student_ID) REFERENCES STUDENT_PERSONAL_DETAILS (Student_ID) ON DELETE CASCADE
+);
+
+-- -------------------------------------------------------------- staff details
+
+CREATE TABLE STAFF_PROFESSIONAL (
+  Staff_ID       INTEGER     NOT NULL,
+  Join_Date      DATE        NOT NULL,
+  Type           VARCHAR(50) NOT NULL,
+  Total_Salary   INTEGER     NOT NULL,
+  Pending_Salary INTEGER     NOT NULL DEFAULT 0,
+  PRIMARY KEY (Staff_ID),
+  FOREIGN KEY (Staff_ID) REFERENCES STAFF_DETAILS (Staff_ID) ON DELETE CASCADE,
+  CHECK (Total_Salary >= 0),
+  CHECK (Pending_Salary >= 0)
+);
+
+CREATE TABLE STAFF_POSITION (
+  Staff_ID   INTEGER     NOT NULL,
+  Sport_ID   INTEGER,
+  Position   VARCHAR(50) NOT NULL,
+  Supervisor INTEGER,
+  PRIMARY KEY (Staff_ID),
+  FOREIGN KEY (Staff_ID) REFERENCES STAFF_DETAILS (Staff_ID) ON DELETE CASCADE,
+  FOREIGN KEY (Sport_ID) REFERENCES SPORTS (Sport_ID) ON DELETE SET NULL,
+  FOREIGN KEY (Supervisor) REFERENCES STAFF_DETAILS (Staff_ID) ON DELETE SET NULL
+);
+
+-- One row per scheduled piece of work, not one row per member of staff.
+CREATE TABLE STAFF_TASKS (
+  Staff_ID INTEGER      NOT NULL,
+  Day      DATE         NOT NULL,
+  Time     TIME         NOT NULL,
+  Work     VARCHAR(100) NOT NULL,
+  PRIMARY KEY (Staff_ID, Day, Time),
+  FOREIGN KEY (Staff_ID) REFERENCES STAFF_DETAILS (Staff_ID) ON DELETE CASCADE
+);
+
+-- ---------------------------------------------------------- fitness challenges
+
+CREATE TABLE FITNESS_CHALLENGES (
+  Challenge_ID   INTEGER     NOT NULL,
+  Challenge_Name VARCHAR(50) NOT NULL,
+  PRIMARY KEY (Challenge_ID)
+);
+
+CREATE TABLE FITNESS_CHALLENGES_DETAILS (
+  Challenge_ID          INTEGER NOT NULL,
+  From_Date             DATE    NOT NULL,
+  To_Date               DATE    NOT NULL,
+  Registration_Deadline DATE    NOT NULL,
+  PRIMARY KEY (Challenge_ID),
+  FOREIGN KEY (Challenge_ID) REFERENCES FITNESS_CHALLENGES (Challenge_ID) ON DELETE CASCADE,
+  CHECK (To_Date >= From_Date),
+  CHECK (Registration_Deadline <= From_Date)
+);
+
+CREATE TABLE FITNESS_SECTIONS (
+  CS_REF_ID    INTEGER     NOT NULL,
+  Challenge_ID INTEGER,
+  Section_Name VARCHAR(50) NOT NULL,
+  PRIMARY KEY (CS_REF_ID),
+  FOREIGN KEY (Challenge_ID) REFERENCES FITNESS_CHALLENGES (Challenge_ID) ON DELETE CASCADE
+);
+
+CREATE TABLE FITNESS_SECTIONS_DETAILS (
+  CS_REF_ID INTEGER     NOT NULL,
+  Date      DATE        NOT NULL,
+  Location  VARCHAR(50) NOT NULL,
+  PRIMARY KEY (CS_REF_ID),
+  FOREIGN KEY (CS_REF_ID) REFERENCES FITNESS_SECTIONS (CS_REF_ID) ON DELETE CASCADE
+);
+
+-- A section can be run by several mentors and can have several winners, so both
+-- of these are many-to-many bridges rather than one row per section.
+CREATE TABLE FITNESS_CHALLENGE_MENTORS (
+  CS_REF_ID INTEGER NOT NULL,
+  Mentor_ID INTEGER NOT NULL,
+  PRIMARY KEY (CS_REF_ID, Mentor_ID),
+  FOREIGN KEY (CS_REF_ID) REFERENCES FITNESS_SECTIONS (CS_REF_ID) ON DELETE CASCADE,
+  FOREIGN KEY (Mentor_ID) REFERENCES STAFF_DETAILS (Staff_ID) ON DELETE CASCADE
+);
+
+CREATE TABLE FITNESS_CHALLENGE_WINNERS (
+  CS_REF_ID INTEGER     NOT NULL,
+  Winner_ID INTEGER     NOT NULL,
+  Prize     VARCHAR(50) NOT NULL,
+  PRIMARY KEY (CS_REF_ID, Winner_ID),
+  FOREIGN KEY (CS_REF_ID) REFERENCES FITNESS_SECTIONS (CS_REF_ID) ON DELETE CASCADE,
+  FOREIGN KEY (Winner_ID) REFERENCES STUDENT_PERSONAL_DETAILS (Student_ID) ON DELETE CASCADE
+);
+
+-- ------------------------------------------------------------------- medical
+
+CREATE TABLE MEDICAL_HISTORY (
+  Med_ID     INTEGER      NOT NULL,
+  Student_ID INTEGER,
+  DateTime   DATETIME     NOT NULL,
+  Type       VARCHAR(100) NOT NULL,
+  PRIMARY KEY (Med_ID),
+  FOREIGN KEY (Student_ID) REFERENCES STUDENT_PERSONAL_DETAILS (Student_ID) ON DELETE CASCADE
+);
+
+CREATE TABLE MEDICAL_HISTORY_DETAILS (
+  Med_ID    INTEGER      NOT NULL,
+  Severity  VARCHAR(50)  NOT NULL,
+  Recovery  DATE         NOT NULL,
+  Treatment VARCHAR(250) NOT NULL,
+  PRIMARY KEY (Med_ID),
+  FOREIGN KEY (Med_ID) REFERENCES MEDICAL_HISTORY (Med_ID) ON DELETE CASCADE
+);
+
+-- ------------------------------------------------------- money and equipment
+
+CREATE TABLE TRANSACTIONS (
+  Transaction_ID INTEGER     NOT NULL,
+  Amount         INTEGER     NOT NULL,
+  Status         VARCHAR(50) NOT NULL,
+  PRIMARY KEY (Transaction_ID),
+  CHECK (Amount >= 0)
+);
+
+CREATE TABLE FUNDS (
+  Fund_ID        INTEGER NOT NULL,
+  Transaction_ID INTEGER,
+  Date           DATE    NOT NULL,
+  PRIMARY KEY (Fund_ID),
+  FOREIGN KEY (Transaction_ID) REFERENCES TRANSACTIONS (Transaction_ID) ON DELETE SET NULL
+);
+
+CREATE TABLE EQUIPMENT (
+  Equipment_ID   INTEGER     NOT NULL,
+  Equipment_Name VARCHAR(50) NOT NULL,
+  Sport_ID       INTEGER,
+  Quantity       INTEGER     NOT NULL DEFAULT 0,
+  PRIMARY KEY (Equipment_ID),
+  FOREIGN KEY (Sport_ID) REFERENCES SPORTS (Sport_ID) ON DELETE SET NULL,
+  CHECK (Quantity >= 0)
+);
+
+CREATE TABLE EQUIPMENT_FUNDS (
+  Transaction_ID INTEGER NOT NULL,
+  Equipment_ID   INTEGER,
+  Quantity       INTEGER NOT NULL,
+  PRIMARY KEY (Transaction_ID),
+  FOREIGN KEY (Transaction_ID) REFERENCES TRANSACTIONS (Transaction_ID) ON DELETE CASCADE,
+  FOREIGN KEY (Equipment_ID) REFERENCES EQUIPMENT (Equipment_ID) ON DELETE SET NULL,
+  CHECK (Quantity >= 0)
+);
+
+CREATE TABLE EQUIPMENT_MAINTENANCE (
+  Equipment_ID INTEGER     NOT NULL,
+  Staff_ID     INTEGER,
+  Date         DATE        NOT NULL,
+  Status       VARCHAR(50) NOT NULL,
+  PRIMARY KEY (Equipment_ID, Date),
+  FOREIGN KEY (Equipment_ID) REFERENCES EQUIPMENT (Equipment_ID) ON DELETE CASCADE,
+  FOREIGN KEY (Staff_ID) REFERENCES STAFF_DETAILS (Staff_ID) ON DELETE SET NULL
+);
+
+CREATE TABLE EQUIPMENT_REGISTRATION (
+  Registration_ID        INTEGER NOT NULL,
+  Equipment_ID           INTEGER,
+  Fund_ID                INTEGER,
+  Expected_Approval_Date DATE    NOT NULL,
+  PRIMARY KEY (Registration_ID),
+  FOREIGN KEY (Equipment_ID) REFERENCES EQUIPMENT (Equipment_ID) ON DELETE CASCADE,
+  FOREIGN KEY (Fund_ID) REFERENCES FUNDS (Fund_ID) ON DELETE SET NULL
+);
+
+-- -------------------------------------------------------------------- indexes
+
+CREATE INDEX IDX_STUDENT_SPORT ON STUDENT_SPORT_DETAILS (Assigned_Sport);
+CREATE INDEX IDX_STAFF_POSITION_SPORT ON STAFF_POSITION (Sport_ID);
+CREATE INDEX IDX_SPORTS_SLOT_SPORT ON SPORTS_SLOT (Sport_ID);
+CREATE INDEX IDX_SPORTS_SLOT_DAY ON SPORTS_SLOT (Day);
+CREATE INDEX IDX_EQUIPMENT_SPORT ON EQUIPMENT (Sport_ID);
+CREATE INDEX IDX_EQUIPMENT_MAINT_DATE ON EQUIPMENT_MAINTENANCE (Date);
+CREATE INDEX IDX_FUNDS_DATE ON FUNDS (Date);
+CREATE INDEX IDX_SPORTS_NAME ON SPORTS (Sport_Name);
+CREATE INDEX IDX_CHALLENGE_NAME ON FITNESS_CHALLENGES (Challenge_Name);

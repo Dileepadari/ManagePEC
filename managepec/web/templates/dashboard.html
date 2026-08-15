@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+
+{% block title %}Dashboard - ManagePEC{% endblock %}
+{% block heading %}Dashboard{% endblock %}
+{% block subheading %}Where the centre stands right now.{% endblock %}
+
+{% block content %}
+<div class="tiles">
+  <div class="tile"><div class="label">Students</div><div class="value">{{ counts.students }}</div></div>
+  <div class="tile"><div class="label">Staff</div><div class="value">{{ counts.staff }}</div></div>
+  <div class="tile"><div class="label">Sports</div><div class="value">{{ counts.sports }}</div></div>
+  <div class="tile"><div class="label">Challenges</div><div class="value">{{ counts.challenges }}</div></div>
+  <div class="tile"><div class="label">Equipment units</div><div class="value">{{ counts.equipment }}</div></div>
+  <div class="tile"><div class="label">Pending salary</div><div class="value">{{ counts.pending_salary }}</div></div>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h2>Enrolment per sport</h2>
+    <p>Students assigned. Bars are scaled to the largest roster ({{ max_enrolled }}).</p>
+    {% if enrolment %}
+      {{ ui.bar_chart(enrolment, 'Sport_Name', 'Enrolled', max_enrolled) }}
+      <p class="note">Average across all sports: {{ average }} students.</p>
+    {% else %}
+      <p class="empty">No sports are on the books.</p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h2>Funds released by month</h2>
+    <p>Value of the transactions behind each month's fund releases.</p>
+    {% if funds %}
+      {{ ui.bar_chart(funds, 'Month', 'Total', max_fund) }}
+    {% else %}
+      <p class="empty">No funds have been released.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <h2>Students without a sport</h2>
+  <p>These students are not enrolled anywhere, so they are earning no PE credit.</p>
+  {{ ui.data_table(
+      ['Student_ID', 'First_Name', 'Last_Name', 'Department'],
+      unassigned,
+      'Every student is enrolled in a sport.') }}
+</div>
+{% endblock %}

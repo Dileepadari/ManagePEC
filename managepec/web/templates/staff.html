@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+
+{% block title %}Staff - ManagePEC{% endblock %}
+{% block heading %}Staff{% endblock %}
+{% block subheading %}Coaches, trainers and support staff, with their posts and salary position.{% endblock %}
+
+{% block content %}
+<div class="tiles">
+  <div class="tile"><div class="label">Staff</div><div class="value">{{ staff | length }}</div></div>
+  <div class="tile"><div class="label">Pending salary</div><div class="value">{{ pending_total }}</div></div>
+</div>
+
+<div class="card">
+  <details {% if form and form.get('staff_id') %}open{% endif %}>
+    <summary>Add a staff member</summary>
+    <form class="stack" method="post" action="{{ url_for('pec.staff') }}">
+      <div>
+        <label for="staff_id">Staff ID</label>
+        <input id="staff_id" name="staff_id" inputmode="numeric" value="{{ form.get('staff_id', '') }}" required>
+      </div>
+      <div>
+        <label for="name">Name (first last)</label>
+        <input id="name" name="name" value="{{ form.get('name', '') }}" required>
+      </div>
+      <div>
+        <label for="contact">Contact</label>
+        <input id="contact" name="contact" value="{{ form.get('contact', '') }}" required>
+      </div>
+      <div>
+        <label for="join_date">Join date</label>
+        <input id="join_date" name="join_date" type="date" value="{{ form.get('join_date', '') }}" required>
+      </div>
+      <div>
+        <label for="staff_type">Type</label>
+        <input id="staff_type" name="staff_type" placeholder="Coach, Trainer, ..." value="{{ form.get('staff_type', '') }}" required>
+      </div>
+      <div>
+        <label for="position">Position</label>
+        <input id="position" name="position" value="{{ form.get('position', '') }}" required>
+      </div>
+      <div>
+        <label for="total_salary">Total salary</label>
+        <input id="total_salary" name="total_salary" inputmode="numeric" value="{{ form.get('total_salary', '0') }}" required>
+      </div>
+      <div>
+        <label for="pending_salary">Pending salary</label>
+        <input id="pending_salary" name="pending_salary" inputmode="numeric" value="{{ form.get('pending_salary', '0') }}" required>
+      </div>
+      <div>
+        <label for="sport_id">Sport</label>
+        <select id="sport_id" name="sport_id">
+          <option value="">Not assigned</option>
+          {% for sport in sports %}
+            <option value="{{ sport.Sport_ID }}"
+              {% if form.get('sport_id') == sport.Sport_ID | string %}selected{% endif %}>
+              {{ sport.Sport_Name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="supervisor">Supervisor staff ID</label>
+        <input id="supervisor" name="supervisor" inputmode="numeric" value="{{ form.get('supervisor', '') }}">
+      </div>
+      <div>
+        <label for="task_work">First task (optional)</label>
+        <input id="task_work" name="task_work" value="{{ form.get('task_work', '') }}">
+      </div>
+      <div>
+        <label for="task_day">Task date</label>
+        <input id="task_day" name="task_day" type="date" value="{{ form.get('task_day', '') }}">
+      </div>
+      <div>
+        <label for="task_time">Task time</label>
+        <input id="task_time" name="task_time" type="time" value="{{ form.get('task_time', '') }}">
+      </div>
+      <div class="full">
+        <button class="btn" type="submit">Add staff member</button>
+      </div>
+    </form>
+  </details>
+</div>
+
+<div class="card">
+  <h2>Roster</h2>
+  {{ ui.data_table(
+      ['Staff_ID', 'First_Name', 'Last_Name', 'Position', 'Sport_Name', 'Type',
+       'Total_Salary', 'Pending_Salary', 'Contact'],
+      staff,
+      'No staff on the books.') }}
+</div>
+{% endblock %}

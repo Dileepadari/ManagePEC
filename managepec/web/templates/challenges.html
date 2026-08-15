@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+
+{% block title %}Challenges - ManagePEC{% endblock %}
+{% block heading %}Fitness challenges{% endblock %}
+{% block subheading %}Challenges, their dates and the sections that run under them.{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2>Search</h2>
+  <p>Matches any part of the challenge name.</p>
+  <form class="inline-form" method="get" action="{{ url_for('pec.challenges') }}">
+    <div>
+      <label for="q">Name contains</label>
+      <input id="q" name="q" value="{{ search }}" placeholder="yoga">
+    </div>
+    <button class="btn" type="submit">Search</button>
+    {% if search %}
+      <a class="btn secondary" href="{{ url_for('pec.challenges') }}">Clear</a>
+    {% endif %}
+  </form>
+</div>
+
+<div class="card">
+  <details {% if form and form.get('challenge_id') %}open{% endif %}>
+    <summary>Add a challenge</summary>
+    <form class="stack" method="post" action="{{ url_for('pec.challenges') }}">
+      <div>
+        <label for="challenge_id">Challenge ID</label>
+        <input id="challenge_id" name="challenge_id" inputmode="numeric" value="{{ form.get('challenge_id', '') }}" required>
+      </div>
+      <div>
+        <label for="challenge_name">Challenge name</label>
+        <input id="challenge_name" name="challenge_name" value="{{ form.get('challenge_name', '') }}" required>
+      </div>
+      <div>
+        <label for="registration_deadline">Registration deadline</label>
+        <input id="registration_deadline" name="registration_deadline" type="date" value="{{ form.get('registration_deadline', '') }}" required>
+      </div>
+      <div>
+        <label for="from_date">From date</label>
+        <input id="from_date" name="from_date" type="date" value="{{ form.get('from_date', '') }}" required>
+      </div>
+      <div>
+        <label for="to_date">To date</label>
+        <input id="to_date" name="to_date" type="date" value="{{ form.get('to_date', '') }}" required>
+      </div>
+      <div>
+        <label for="section_ref_id">Section reference ID</label>
+        <input id="section_ref_id" name="section_ref_id" inputmode="numeric" value="{{ form.get('section_ref_id', '') }}" required>
+      </div>
+      <div>
+        <label for="section_name">Section name</label>
+        <input id="section_name" name="section_name" value="{{ form.get('section_name', '') }}" required>
+      </div>
+      <div>
+        <label for="section_date">Section date</label>
+        <input id="section_date" name="section_date" type="date" value="{{ form.get('section_date', '') }}" required>
+      </div>
+      <div>
+        <label for="location">Location</label>
+        <input id="location" name="location" value="{{ form.get('location', '') }}" required>
+      </div>
+      <div>
+        <label for="mentor_id">Mentor staff ID</label>
+        <input id="mentor_id" name="mentor_id" inputmode="numeric" value="{{ form.get('mentor_id', '') }}">
+      </div>
+      <div>
+        <label for="winner_id">Winner student ID</label>
+        <input id="winner_id" name="winner_id" inputmode="numeric" value="{{ form.get('winner_id', '') }}">
+      </div>
+      <div>
+        <label for="prize">Prize</label>
+        <input id="prize" name="prize" value="{{ form.get('prize', '') }}">
+      </div>
+      <div class="full">
+        <button class="btn" type="submit">Add challenge</button>
+      </div>
+    </form>
+  </details>
+</div>
+
+<div class="card">
+  <h2>{% if search %}Matches for "{{ search }}"{% else %}All challenges{% endif %}</h2>
+  {% if search %}
+    {{ ui.data_table(
+        ['Challenge_ID', 'Challenge_Name', 'From_Date', 'To_Date', 'Registration_Deadline'],
+        challenges, 'Nothing matched that name.') }}
+  {% else %}
+    {{ ui.data_table(
+        ['Challenge_ID', 'Challenge_Name', 'From_Date', 'To_Date', 'Sections'],
+        challenges, 'No challenges yet.') }}
+  {% endif %}
+</div>
+{% endblock %}

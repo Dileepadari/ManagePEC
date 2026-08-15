@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+
+{% block title %}Equipment - ManagePEC{% endblock %}
+{% block heading %}Equipment{% endblock %}
+{% block subheading %}Stock levels and the most recent maintenance record for each item.{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2>Serviced on a date</h2>
+  <form class="inline-form" method="get" action="{{ url_for('pec.equipment') }}">
+    <div>
+      <label for="date">Date</label>
+      <input id="date" name="date" type="date" value="{{ on_date }}">
+    </div>
+    <button class="btn" type="submit">Show</button>
+  </form>
+  {% if serviced is not none %}
+    <div style="margin-top:16px">
+      {{ ui.data_table(['Equipment_ID', 'Equipment_Name', 'Status', 'Staff_ID'],
+                       serviced, 'Nothing was serviced on ' ~ on_date ~ '.') }}
+    </div>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2>Inventory</h2>
+  <p>Status comes from the latest maintenance entry. Retiring an item keeps the
+     funding record it was bought with.</p>
+  {% if equipment %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>ID</th><th>Item</th><th>Sport</th><th>Quantity</th>
+              <th>Last checked</th><th>Status</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for item in equipment %}
+            <tr>
+              <td>{{ item.Equipment_ID }}</td>
+              <td>{{ item.Equipment_Name }}</td>
+              <td>{{ item.Sport_Name | blank }}</td>
+              <td>{{ item.Quantity }}</td>
+              <td>{{ item.Date | blank }}</td>
+              <td>{{ ui.status_pill(item.Status) }}</td>
+              <td>
+                <form method="post"
+                      action="{{ url_for('pec.retire_equipment', equipment_id=item.Equipment_ID) }}">
+                  <button class="btn danger" type="submit">Retire</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="empty">No equipment on record.</p>
+  {% endif %}
+</div>
+{% endblock %}

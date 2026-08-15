@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title %}{{ code }} - ManagePEC{% endblock %}
+{% block heading %}{{ code }}{% endblock %}
+{% block subheading %}{{ message }}{% endblock %}
+
+{% block content %}
+<div class="card">
+  <p><a href="{{ url_for('pec.dashboard') }}">Back to the dashboard</a></p>
+</div>
+{% endblock %}

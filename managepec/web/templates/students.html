@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+
+{% block title %}Students - ManagePEC{% endblock %}
+{% block heading %}Students{% endblock %}
+{% block subheading %}Personal, academic and sport records, added together in one transaction.{% endblock %}
+
+{% block content %}
+<div class="card">
+  <details {% if form and form.get('student_id') %}open{% endif %}>
+    <summary>Add a student</summary>
+    <form class="stack" method="post" action="{{ url_for('pec.students') }}">
+      <div>
+        <label for="student_id">Student ID</label>
+        <input id="student_id" name="student_id" inputmode="numeric" value="{{ form.get('student_id', '') }}" required>
+      </div>
+      <div>
+        <label for="name">Name (first last)</label>
+        <input id="name" name="name" value="{{ form.get('name', '') }}" required>
+      </div>
+      <div>
+        <label for="date_of_birth">Date of birth</label>
+        <input id="date_of_birth" name="date_of_birth" type="date" value="{{ form.get('date_of_birth', '') }}" required>
+      </div>
+      <div>
+        <label for="contact">Contact</label>
+        <input id="contact" name="contact" value="{{ form.get('contact', '') }}" required>
+      </div>
+      <div>
+        <label for="department">Department</label>
+        <input id="department" name="department" value="{{ form.get('department', '') }}" required>
+      </div>
+      <div>
+        <label for="course_year">Course year</label>
+        <input id="course_year" name="course_year" value="{{ form.get('course_year', '') }}" required>
+      </div>
+      <div>
+        <label for="credits_done">Credits done</label>
+        <input id="credits_done" name="credits_done" inputmode="numeric" value="{{ form.get('credits_done', '0') }}" required>
+      </div>
+      <div>
+        <label for="assigned_sport">Assigned sport</label>
+        <select id="assigned_sport" name="assigned_sport">
+          <option value="">Not enrolled</option>
+          {% for sport in sports %}
+            <option value="{{ sport.Sport_ID }}"
+              {% if form.get('assigned_sport') == sport.Sport_ID | string %}selected{% endif %}>
+              {{ sport.Sport_Name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="attendance">Attendance (0-100)</label>
+        <input id="attendance" name="attendance" inputmode="numeric" value="{{ form.get('attendance', '0') }}" required>
+      </div>
+      <div class="full">
+        <button class="btn" type="submit">Add student</button>
+      </div>
+    </form>
+  </details>
+</div>
+
+<div class="card">
+  <h2>{{ students | length }} student(s)</h2>
+  <p>Update a contact number or attendance figure inline.</p>
+  {% if students %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th><th>Name</th><th>Department</th><th>Year</th>
+            <th>Sport</th><th>Attendance</th><th>Contact</th><th>Update</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for student in students %}
+            <tr>
+              <td>{{ student.Student_ID }}</td>
+              <td>{{ student.First_Name }} {{ student.Last_Name }}</td>
+              <td>{{ student.Department | blank }}</td>
+              <td>{{ student.Course_Year | blank }}</td>
+              <td>{{ student.Sport_Name | blank }}</td>
+              <td>{{ student.Attendance | blank }}</td>
+              <td>{{ student.Contact }}</td>
+              <td>
+                <form class="inline-form" method="post"
+                      action="{{ url_for('pec.update_student', student_id=student.Student_ID) }}">
+                  <input name="contact" placeholder="New contact" aria-label="New contact">
+                  <input name="attendance" placeholder="Attendance" inputmode="numeric"
+                         aria-label="New attendance" style="max-width: 110px">
+                  <button class="btn secondary" type="submit">Save</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="empty">No students yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

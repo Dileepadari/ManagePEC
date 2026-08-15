@@ -1,0 +1,536 @@
+/* ManagePEC stylesheet.
+ *
+ * Written from scratch to replace the vendored Bootstrap, jQuery, FontAwesome
+ * and LineIcons bundle the phase-4 site carried around.  Everything is tokens,
+ * flexbox and grid, so the page works with no JavaScript and no network fetch.
+ *
+ * Chart colours follow the project data-viz palette: a single blue hue for
+ * magnitude, and a reserved four-colour status palette that is always paired
+ * with a text label so colour never carries the meaning on its own.
+ */
+
+:root {
+  color-scheme: light;
+
+  --surface-1: #fcfcfb;
+  --plane: #f9f9f7;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #898781;
+  --gridline: #e1e0d9;
+  --baseline: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.1);
+
+  --brand: #47266b;
+  --accent: #2a78d6;
+  --accent-soft: #cde2fb;
+
+  --status-good: #0ca30c;
+  --status-warning: #fab219;
+  --status-serious: #ec835a;
+  --status-critical: #d03b3b;
+
+  --radius: 10px;
+  --radius-sm: 4px;
+  --gap: 20px;
+  --font: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --surface-1: #1a1a19;
+    --plane: #0d0d0d;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #898781;
+    --gridline: #2c2c2a;
+    --baseline: #383835;
+    --border: rgba(255, 255, 255, 0.1);
+    --accent: #3987e5;
+    --accent-soft: #184f95;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface-1: #1a1a19;
+  --plane: #0d0d0d;
+  --text-primary: #ffffff;
+  --text-secondary: #c3c2b7;
+  --text-muted: #898781;
+  --gridline: #2c2c2a;
+  --baseline: #383835;
+  --border: rgba(255, 255, 255, 0.1);
+  --accent: #3987e5;
+  --accent-soft: #184f95;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--plane);
+  color: var(--text-primary);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+a {
+  color: var(--accent);
+}
+
+/* ------------------------------------------------------------------ layout */
+
+.shell {
+  display: grid;
+  grid-template-columns: 232px 1fr;
+  min-height: 100vh;
+}
+
+.sidebar {
+  background: var(--surface-1);
+  border-right: 1px solid var(--border);
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.sidebar .brand img {
+  width: 150px;
+  max-width: 100%;
+}
+
+/* Only one wordmark is ever shown. `display` is left entirely to these rules -
+   giving `.sidebar .brand img` a display of its own would out-specify them and
+   put both variants on screen at once. */
+.sidebar .brand .brand-dark {
+  display: block;
+}
+.sidebar .brand .brand-light {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .sidebar .brand .brand-dark {
+    display: none;
+  }
+  :root:not([data-theme="light"]) .sidebar .brand .brand-light {
+    display: block;
+  }
+}
+
+:root[data-theme="dark"] .sidebar .brand .brand-dark {
+  display: none;
+}
+:root[data-theme="dark"] .sidebar .brand .brand-light {
+  display: block;
+}
+
+.sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar nav a {
+  display: block;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.sidebar nav a:hover {
+  background: var(--plane);
+  color: var(--text-primary);
+}
+
+.sidebar nav a.active {
+  background: var(--accent-soft);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.sidebar .meta {
+  margin-top: auto;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+main {
+  padding: 28px 32px 56px;
+  max-width: 1240px;
+}
+
+.page-head {
+  margin-bottom: 24px;
+}
+
+.page-head h1 {
+  margin: 0 0 4px;
+  font-size: 24px;
+  letter-spacing: -0.01em;
+}
+
+.page-head p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+/* ------------------------------------------------------------------- cards */
+
+.card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: var(--gap);
+}
+
+.card > h2 {
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+
+.card > h2 + p {
+  margin: 0 0 16px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.grid {
+  display: grid;
+  gap: var(--gap);
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  align-items: start;
+}
+
+/* -------------------------------------------------------------- stat tiles */
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: var(--gap);
+}
+
+.tile {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.tile .label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.tile .value {
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.2;
+  margin-top: 4px;
+}
+
+/* ------------------------------------------------------------------ tables */
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--gridline);
+  white-space: nowrap;
+}
+
+th {
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--baseline);
+}
+
+td {
+  font-variant-numeric: tabular-nums;
+}
+
+tbody tr:hover td {
+  background: var(--plane);
+}
+
+.empty {
+  color: var(--text-secondary);
+  font-style: italic;
+  padding: 12px 0;
+}
+
+/* ------------------------------------------------------------- bar charts */
+
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bar-row {
+  display: grid;
+  grid-template-columns: 130px 1fr 76px;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.bar-row .name {
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Both of these are spans so they can sit inside a grid row, so they need an
+   explicit display: an inline box ignores width and height. */
+.bar-track {
+  display: block;
+  background: var(--gridline);
+  border-radius: var(--radius-sm);
+  height: 14px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  display: block;
+  background: var(--accent);
+  height: 100%;
+  border-radius: var(--radius-sm);
+  min-width: 2px;
+}
+
+.bar-row .value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+/* ------------------------------------------------------------------ status */
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.status::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  flex: none;
+}
+
+.status.good::before {
+  background: var(--status-good);
+}
+.status.warning::before {
+  background: var(--status-warning);
+}
+.status.serious::before {
+  background: var(--status-serious);
+}
+.status.critical::before {
+  background: var(--status-critical);
+}
+
+/* ------------------------------------------------------------------- forms */
+
+form.stack {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px;
+}
+
+form.stack .full {
+  grid-column: 1 / -1;
+}
+
+label {
+  display: block;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--baseline);
+  border-radius: var(--radius-sm);
+  background: var(--plane);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+textarea {
+  font-family: var(--mono);
+  font-size: 13px;
+  resize: vertical;
+  min-height: 130px;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.btn {
+  display: inline-block;
+  padding: 8px 16px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: #ffffff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn.secondary {
+  background: transparent;
+  border-color: var(--baseline);
+  color: var(--text-primary);
+}
+
+.btn.danger {
+  background: transparent;
+  border-color: var(--status-critical);
+  color: var(--status-critical);
+}
+
+.btn:hover {
+  filter: brightness(0.95);
+}
+
+.inline-form {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.inline-form > div {
+  min-width: 160px;
+}
+
+/* ------------------------------------------------------------------ flashes */
+
+.flash {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.flash.success {
+  border-left: 3px solid var(--status-good);
+}
+
+.flash.error {
+  border-left: 3px solid var(--status-critical);
+}
+
+/* --------------------------------------------------------------------- sql */
+
+pre.sql {
+  background: var(--plane);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  margin: 0 0 16px;
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.preset-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.preset-list a {
+  padding: 6px 12px;
+  border: 1px solid var(--baseline);
+  border-radius: 999px;
+  font-size: 13px;
+  text-decoration: none;
+  color: var(--text-secondary);
+}
+
+.preset-list a.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.note {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin-top: 12px;
+}
+
+details summary {
+  cursor: pointer;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 820px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+  .sidebar {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  main {
+    padding: 20px 16px 40px;
+  }
+}

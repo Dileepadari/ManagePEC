@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+
+{% block title %}Analysis - ManagePEC{% endblock %}
+{% block heading %}One-click analysis{% endblock %}
+{% block subheading %}The aggregate and analysis questions from the project brief, answered in one page.{% endblock %}
+
+{% block content %}
+<div class="tiles">
+  <div class="tile">
+    <div class="label">Avg students per sport</div>
+    <div class="value">{{ average }}</div>
+  </div>
+  <div class="tile">
+    <div class="label">Total pending salary</div>
+    <div class="value">{{ pending }}</div>
+  </div>
+  <div class="tile">
+    <div class="label">Students without a sport</div>
+    <div class="value">{{ unassigned | length }}</div>
+  </div>
+  <div class="tile">
+    <div class="label">Equipment units</div>
+    <div class="value">{{ counts.equipment }}</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Funds released in a month</h2>
+  <p>Sum of the transactions behind the funds cleared in that calendar month.</p>
+  <form class="inline-form" method="get" action="{{ url_for('pec.analysis') }}">
+    <div>
+      <label for="month">Month (1-12)</label>
+      <input id="month" name="month" inputmode="numeric" value="{{ month or '' }}">
+    </div>
+    <button class="btn" type="submit">Calculate</button>
+  </form>
+  {% if monthly %}
+    <p class="note">
+      Month {{ monthly.month }}: {{ monthly.releases }} release(s) totalling
+      {{ monthly.total }}.
+    </p>
+  {% endif %}
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h2>Funds by month</h2>
+    <p>Every month that saw a release.</p>
+    {% if funds %}
+      {{ ui.bar_chart(funds, 'Month', 'Total', funds | map(attribute='Total') | max) }}
+    {% else %}
+      <p class="empty">No funds have been released.</p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h2>Average attendance by department</h2>
+    <p>Percentage points, best first.</p>
+    {% if attendance %}
+      {{ ui.bar_chart(attendance, 'Department', 'AvgAttendance', 100, '%') }}
+    {% else %}
+      <p class="empty">No attendance has been recorded.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <h2>Enrolment per sport</h2>
+  {{ ui.data_table(['Sport_ID', 'Sport_Name', 'Capacity', 'Enrolled'], enrolment,
+                   'No sports on the books.') }}
+</div>
+
+<div class="card">
+  <h2>Students without a sport</h2>
+  {{ ui.data_table(['Student_ID', 'First_Name', 'Last_Name', 'Department'],
+                   unassigned, 'Every student is enrolled in a sport.') }}
+</div>
+{% endblock %}

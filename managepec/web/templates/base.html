@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}ManagePEC{% endblock %}</title>
+  <link rel="icon" href="{{ url_for('static', filename='images/logo-mark.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <a class="brand" href="{{ url_for('pec.dashboard') }}">
+      <img class="brand-dark" src="{{ url_for('static', filename='images/logo-full-dark.png') }}" alt="ADK DEV">
+      <img class="brand-light" src="{{ url_for('static', filename='images/logo-full-light.png') }}" alt="ADK DEV">
+    </a>
+    <nav>
+      {% for endpoint, label in nav_items %}
+        <a href="{{ url_for(endpoint) }}"
+           class="{{ 'active' if request.endpoint == endpoint else '' }}">{{ label }}</a>
+      {% endfor %}
+    </nav>
+    <div class="meta">
+      ManagePEC<br>
+      Physical Education Centre
+    </div>
+  </aside>
+
+  <main>
+    <div class="page-head">
+      <h1>{% block heading %}{% endblock %}</h1>
+      <p>{% block subheading %}{% endblock %}</p>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+</div>
+</body>
+</html>

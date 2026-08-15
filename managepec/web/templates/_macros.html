@@ -1,0 +1,46 @@
+{# Shared rendering helpers. #}
+
+{% macro data_table(columns, rows, empty='No rows.') %}
+  {% if rows %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>{% for column in columns %}<th>{{ column }}</th>{% endfor %}</tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+            <tr>{% for column in columns %}<td>{{ row[column] | blank }}</td>{% endfor %}</tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="empty">{{ empty }}</p>
+  {% endif %}
+{% endmacro %}
+
+{# A single-series magnitude chart: one blue hue, values direct-labelled, so no
+   legend is needed and colour never carries the meaning. #}
+{% macro bar_chart(rows, name_key, value_key, maximum, suffix='') %}
+  <div class="bars">
+    {% for row in rows %}
+      {% set value = row[value_key] or 0 %}
+      <div class="bar-row">
+        <span class="name" title="{{ row[name_key] }}">{{ row[name_key] }}</span>
+        <span class="bar-track">
+          <span class="bar-fill"
+                style="width: {{ (100 * value / maximum) if maximum else 0 }}%"></span>
+        </span>
+        <span class="value">{{ value }}{{ suffix }}</span>
+      </div>
+    {% endfor %}
+  </div>
+{% endmacro %}
+
+{% macro status_pill(status) %}
+  {% set text = status or 'Unrecorded' %}
+  {% set tone = 'good' if text == 'Good'
+        else ('warning' if text == 'Under Maintenance'
+        else ('critical' if text == 'Needs Repair' else '')) %}
+  <span class="status {{ tone }}">{{ text }}</span>
+{% endmacro %}
