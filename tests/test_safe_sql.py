@@ -42,8 +42,62 @@ def test_write_and_ddl_statements_are_refused(sql):
 
 
 def test_stacked_statements_are_refused():
-    with pytest.raises(UnsafeQuery, match="one statement"):
+    with pytest.raises(UnsafeQuery, match="one statement") as exc:
         validate("SELECT 1; DROP TABLE SPORTS")
+    assert exc.value.kind == "multiple"
+
+
+@pytest.mark.parametrize(
+    ("sql", "keyword"),
+    [
+        ("DELETE FROM SPORTS", "DELETE"),
+        ("UPDATE SPORTS SET Capacity = 0", "UPDATE"),
+        ("INSERT INTO SPORTS VALUES (9, 'x', 1, 0, NULL)", "INSERT"),
+        ("TRUNCATE TABLE SPORTS", "TRUNCATE"),
+    ],
+)
+def test_a_write_says_it_would_change_data(sql, keyword):
+    """The refusal has to name the change, not just say 'read-only'."""
+    with pytest.raises(UnsafeQuery) as exc:
+        validate(sql)
+    assert exc.value.kind == "changes-data"
+    assert exc.value.changes_database is True
+    assert "would change data in the database" in str(exc.value)
+    assert keyword in str(exc.value)
+    assert "nothing was run" in str(exc.value)
+
+
+@pytest.mark.parametrize(
+    "sql",
+    ["DROP TABLE SPORTS", "ALTER TABLE SPORTS ADD COLUMN x INT", "CREATE TABLE t (a INT)"],
+)
+def test_ddl_says_it_would_change_the_schema(sql):
+    with pytest.raises(UnsafeQuery) as exc:
+        validate(sql)
+    assert exc.value.kind == "changes-schema"
+    assert exc.value.changes_database is True
+    assert "would change the database schema" in str(exc.value)
+
+
+@pytest.mark.parametrize("sql", ["PRAGMA table_info(SPORTS)", "ATTACH DATABASE 'x' AS y"])
+def test_session_statements_are_flagged_separately(sql):
+    with pytest.raises(UnsafeQuery) as exc:
+        validate(sql)
+    assert exc.value.kind == "changes-state"
+    assert exc.value.changes_database is False
+
+
+def test_a_plain_non_select_is_not_reported_as_a_write():
+    with pytest.raises(UnsafeQuery) as exc:
+        validate("EXPLAIN SELECT 1")
+    assert exc.value.kind == "not-a-select"
+    assert exc.value.changes_database is False
+
+
+def test_a_write_hidden_after_a_select_is_still_caught():
+    with pytest.raises(UnsafeQuery) as exc:
+        validate("SELECT * FROM SPORTS WHERE Sport_ID IN (DELETE FROM SPORTS)")
+    assert exc.value.kind == "changes-data"
 
 
 def test_trailing_semicolon_is_allowed():

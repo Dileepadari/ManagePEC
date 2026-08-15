@@ -7,6 +7,8 @@ ever concatenated into a statement.
 
 from __future__ import annotations
 
+import re
+
 from flask import (
     Blueprint,
     current_app,
@@ -40,6 +42,18 @@ USER_ERRORS = (ValidationError, repo.RepositoryError)
 def blank(value: object) -> str:
     """Render NULLs as a dash rather than the word None."""
     return "-" if value is None else str(value)
+
+
+@bp.app_template_filter("column_label")
+def column_label(column: str) -> str:
+    """Turn a database column name into a heading a person would write.
+
+    `Student_ID` becomes "Student ID" and `AvgAttendance` becomes "Avg
+    Attendance". The stylesheet upper-cases table headings, so this is about
+    losing the underscores and splitting the runs-together names, not about case.
+    """
+    spaced = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ", str(column).replace("_", " "))
+    return " ".join(spaced.split()) or str(column)
 
 
 @bp.app_context_processor
@@ -262,6 +276,7 @@ def query_console():
     rows: list[dict] = []
     truncated = False
     error = None
+    would_change = False
 
     if request.method == "POST":
         limit = current_app.config["MAX_QUERY_ROWS"]
@@ -269,9 +284,10 @@ def query_console():
             columns, rows, truncated = safe_sql.run(conn, sql, limit)
         except safe_sql.UnsafeQuery as exc:
             error = str(exc)
+            would_change = exc.changes_database
         except Exception as exc:
             conn.rollback()
-            error = f"the database rejected that query: {exc}"
+            error = f"The database rejected that query: {exc}"
 
     return render_template(
         "query.html",
@@ -280,6 +296,7 @@ def query_console():
         rows=rows,
         truncated=truncated,
         error=error,
+        would_change=would_change,
         ran=request.method == "POST" and error is None,
         limit=current_app.config["MAX_QUERY_ROWS"],
     )
@@ -328,6 +345,21 @@ def api_summary():
     )
 
 
-@bp.errorhandler(404)
+# app_errorhandler, not errorhandler: a URL that matches no route belongs to no
+# blueprint, so a blueprint-scoped handler never sees it and Flask serves its own
+# unstyled page instead.
+@bp.app_errorhandler(404)
 def not_found(_error):
     return render_template("error.html", code=404, message="Page not found."), 404
+
+
+@bp.app_errorhandler(500)
+def server_error(_error):
+    return (
+        render_template(
+            "error.html",
+            code=500,
+            message="Something went wrong at our end. The error has been logged.",
+        ),
+        500,
+    )

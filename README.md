@@ -1,6 +1,5 @@
 <p align="center">
-  <img src="assets/logo-full-dark.png#gh-light-mode-only" alt="ADK DEV" width="360">
-  <img src="assets/logo-full-light.png#gh-dark-mode-only" alt="ADK DEV" width="360">
+  <img src="assets/logo-mark.png" alt="ADK DEV" width="96">
 </p>
 
 # ManagePEC

@@ -101,35 +101,57 @@ a {
   gap: 24px;
 }
 
-.sidebar .brand img {
-  width: 150px;
-  max-width: 100%;
+/* The mark in a tinted badge next to the app name, the same treatment the other
+   ADK DEV projects use. The full wordmark is close to square (476x524 - mark,
+   name and tagline stacked) and is too tall for an app shell. */
+.sidebar .brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--text-primary);
 }
 
-/* Only one wordmark is ever shown. `display` is left entirely to these rules -
-   giving `.sidebar .brand img` a display of its own would out-specify them and
-   put both variants on screen at once. */
-.sidebar .brand .brand-dark {
-  display: block;
+.brand-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  padding: 5px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
 }
-.sidebar .brand .brand-light {
-  display: none;
+
+.brand-badge img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.brand-name {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* The mark ships as a solid brand-violet on transparent, which disappears
+   against a dark surface. brightness(0) flattens any opaque pixel to black and
+   keeps the alpha shape; invert(1) flips it to white for dark mode, so it reads
+   in both themes without shipping a second file. */
+.logo-mono {
+  filter: brightness(0);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .sidebar .brand .brand-dark {
-    display: none;
-  }
-  :root:not([data-theme="light"]) .sidebar .brand .brand-light {
-    display: block;
+  :root:not([data-theme="light"]) .logo-mono {
+    filter: brightness(0) invert(1);
   }
 }
 
-:root[data-theme="dark"] .sidebar .brand .brand-dark {
-  display: none;
-}
-:root[data-theme="dark"] .sidebar .brand .brand-light {
-  display: block;
+:root[data-theme="dark"] .logo-mono {
+  filter: brightness(0) invert(1);
 }
 
 .sidebar nav {
@@ -164,9 +186,12 @@ a {
   color: var(--text-muted);
 }
 
+/* Fills the shell column. Cards and tables want the width; only running prose
+   is held to a readable measure, by `.prose` below. */
 main {
   padding: 28px 32px 56px;
-  max-width: 1240px;
+  width: 100%;
+  min-width: 0;
 }
 
 .page-head {
@@ -177,6 +202,13 @@ main {
   margin: 0 0 4px;
   font-size: 24px;
   letter-spacing: -0.01em;
+}
+
+.page-head p,
+.card > h2 + p,
+.note,
+.flash {
+  max-width: 78ch;
 }
 
 .page-head p {
@@ -293,9 +325,11 @@ tbody tr:hover td {
   gap: 10px;
 }
 
+/* The label and value columns shrink in a narrow card so the bar itself keeps
+   most of the width; on a wide card they settle at their comfortable size. */
 .bar-row {
   display: grid;
-  grid-template-columns: 130px 1fr 76px;
+  grid-template-columns: minmax(60px, 130px) 1fr minmax(44px, 76px);
   align-items: center;
   gap: 12px;
   font-size: 14px;
@@ -366,10 +400,13 @@ tbody tr:hover td {
 
 /* ------------------------------------------------------------------- forms */
 
+/* Capped so a wide window does not stretch a twelve-field form into one
+   unreadable row of very wide inputs. */
 form.stack {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 14px;
+  max-width: 1180px;
 }
 
 form.stack .full {
@@ -451,6 +488,33 @@ textarea:focus {
   min-width: 160px;
 }
 
+/* The per-row editor inside a table. Inputs are sized to their content so the
+   whole control fits on one line and the row keeps a normal height. */
+.row-form {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+.row-form input {
+  padding: 5px 8px;
+  font-size: 13px;
+}
+
+.row-form input.contact {
+  width: 150px;
+}
+
+.row-form input.number {
+  width: 76px;
+}
+
+.row-form .btn {
+  padding: 5px 12px;
+  font-size: 13px;
+}
+
 /* ------------------------------------------------------------------ flashes */
 
 .flash {
@@ -467,6 +531,16 @@ textarea:focus {
 
 .flash.error {
   border-left: 3px solid var(--status-critical);
+}
+
+/* Used when the query console refuses a statement that would have written to
+   the database - a stronger signal than an ordinary "that did not parse". */
+.card.callout-warning {
+  border-left: 3px solid var(--status-critical);
+}
+
+.card.callout-warning > h2 {
+  margin-bottom: 8px;
 }
 
 /* --------------------------------------------------------------------- sql */
@@ -525,12 +599,29 @@ details summary {
   .sidebar {
     border-right: none;
     border-bottom: 1px solid var(--border);
+    padding: 14px 16px;
+    gap: 12px;
+  }
+  .brand-badge {
+    width: 28px;
+    height: 28px;
   }
   .sidebar nav {
     flex-direction: row;
     flex-wrap: wrap;
   }
+  /* The footer note is a desktop nicety; on a phone it is one more thing
+     between the reader and the page. */
+  .sidebar .meta {
+    display: none;
+  }
   main {
     padding: 20px 16px 40px;
+  }
+  .page-head h1 {
+    font-size: 21px;
+  }
+  .tile .value {
+    font-size: 24px;
   }
 }

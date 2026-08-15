@@ -17,7 +17,7 @@
   <h2>{{ chosen.title }}</h2>
   <p>{{ chosen.description }}</p>
   <pre class="sql">{{ chosen.sql }}</pre>
-  {{ ui.data_table(columns, rows, 'This query returned nothing.') }}
+  {{ ui.data_table(columns, rows, 'This query returned nothing.', raw_headers=true) }}
   {% if truncated %}
     <p class="note">Output was cut off at the row limit.</p>
   {% endif %}

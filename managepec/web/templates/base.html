@@ -11,8 +11,10 @@
 <div class="shell">
   <aside class="sidebar">
     <a class="brand" href="{{ url_for('pec.dashboard') }}">
-      <img class="brand-dark" src="{{ url_for('static', filename='images/logo-full-dark.png') }}" alt="ADK DEV">
-      <img class="brand-light" src="{{ url_for('static', filename='images/logo-full-light.png') }}" alt="ADK DEV">
+      <span class="brand-badge">
+        <img class="logo-mono" src="{{ url_for('static', filename='images/logo-mark.png') }}" alt="">
+      </span>
+      <span class="brand-name">ManagePEC</span>
     </a>
     <nav>
       {% for endpoint, label in nav_items %}

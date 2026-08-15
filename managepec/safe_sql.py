@@ -19,34 +19,37 @@ import re
 
 from .db import Connection, Row
 
-FORBIDDEN_KEYWORDS = frozenset(
+# Grouped by what the statement would actually do, so the refusal can say so
+# rather than just naming a banned word.
+WRITE_KEYWORDS = frozenset(
+    {"delete", "insert", "merge", "replace", "truncate", "update", "upsert"}
+)
+
+SCHEMA_KEYWORDS = frozenset(
+    {"alter", "create", "drop", "reindex", "rename", "vacuum"}
+)
+
+SESSION_KEYWORDS = frozenset(
     {
-        "alter",
         "attach",
         "begin",
+        "benchmark",
         "call",
         "commit",
         "copy",
-        "create",
-        "delete",
         "detach",
         "do",
-        "drop",
+        "dumpfile",
         "execute",
         "grant",
         "handler",
-        "insert",
         "into",
         "load",
         "load_file",
         "lock",
-        "merge",
         "outfile",
         "pragma",
-        "reindex",
         "release",
-        "rename",
-        "replace",
         "revoke",
         "rollback",
         "savepoint",
@@ -54,21 +57,36 @@ FORBIDDEN_KEYWORDS = frozenset(
         "shutdown",
         "sleep",
         "start",
-        "truncate",
         "unlock",
-        "update",
-        "upsert",
-        "vacuum",
-        "dumpfile",
-        "benchmark",
     }
 )
+
+FORBIDDEN_KEYWORDS = WRITE_KEYWORDS | SCHEMA_KEYWORDS | SESSION_KEYWORDS
 
 _WORD_RE = re.compile(r"[A-Za-z_][A-Za-z_0-9]*")
 
 
 class UnsafeQuery(ValueError):
-    """The submitted SQL is not a plain, single, read-only SELECT."""
+    """The submitted SQL is not a plain, single, read-only SELECT.
+
+    `kind` says why, so the page can warn loudly about a statement that would
+    have changed the database and stay quiet about a typo:
+
+        changes-data    an INSERT/UPDATE/DELETE and friends
+        changes-schema  DDL
+        changes-state   touches the server, session or filesystem
+        not-a-select    does not open with SELECT or WITH
+        multiple        more than one statement
+        empty           nothing submitted
+    """
+
+    def __init__(self, message: str, kind: str = "not-a-select") -> None:
+        super().__init__(message)
+        self.kind = kind
+
+    @property
+    def changes_database(self) -> bool:
+        return self.kind in {"changes-data", "changes-schema"}
 
 
 def strip_literals_and_comments(sql: str) -> str:
@@ -129,10 +147,39 @@ def strip_literals_and_comments(sql: str) -> str:
     return "".join(out)
 
 
+def _describe(words: list[str]) -> UnsafeQuery | None:
+    """Build the refusal for the first forbidden keyword found, if any."""
+    for word in words:
+        if word in WRITE_KEYWORDS:
+            return UnsafeQuery(
+                f"This statement would change data in the database ({word.upper()}). "
+                "The query console is read-only, so nothing was run and no rows "
+                "were touched. Use the Students, Staff, Sports, Challenges or "
+                "Equipment pages to make changes.",
+                "changes-data",
+            )
+        if word in SCHEMA_KEYWORDS:
+            return UnsafeQuery(
+                f"This statement would change the database schema ({word.upper()}). "
+                "The query console is read-only, so nothing was run and the "
+                "schema is unchanged. Schema changes belong in schema/, applied "
+                "with `python -m managepec.cli init-db`.",
+                "changes-schema",
+            )
+        if word in SESSION_KEYWORDS:
+            return UnsafeQuery(
+                f"This statement would change server, session or file state "
+                f"({word.upper()}), which the query console does not allow. "
+                "Nothing was run.",
+                "changes-state",
+            )
+    return None
+
+
 def validate(sql: str) -> str:
     """Return the cleaned statement, or raise UnsafeQuery explaining the refusal."""
     if sql is None or not sql.strip():
-        raise UnsafeQuery("enter a query first")
+        raise UnsafeQuery("Enter a query first.", "empty")
 
     statement = sql.strip()
     scrubbed = strip_literals_and_comments(statement)
@@ -141,17 +188,26 @@ def validate(sql: str) -> str:
     if body.endswith(";"):
         body = body[:-1]
     if ";" in body:
-        raise UnsafeQuery("run one statement at a time")
+        raise UnsafeQuery(
+            "Run one statement at a time. A second statement after a semicolon "
+            "could change the database, so the whole submission was refused.",
+            "multiple",
+        )
 
     words = [word.lower() for word in _WORD_RE.findall(scrubbed)]
     if not words:
-        raise UnsafeQuery("enter a query first")
-    if words[0] not in {"select", "with"}:
-        raise UnsafeQuery("only SELECT and WITH queries are allowed here")
+        raise UnsafeQuery("Enter a query first.", "empty")
 
-    offenders = sorted(FORBIDDEN_KEYWORDS.intersection(words))
-    if offenders:
-        raise UnsafeQuery(f"this console is read-only, remove: {', '.join(offenders)}")
+    # Checked before the SELECT test so a write gets its own explanation rather
+    # than the generic "not a SELECT".
+    refusal = _describe(words)
+    if refusal is not None:
+        raise refusal
+
+    if words[0] not in {"select", "with"}:
+        raise UnsafeQuery(
+            "Only SELECT and WITH queries can run here.", "not-a-select"
+        )
 
     return statement.rstrip().rstrip(";")
 

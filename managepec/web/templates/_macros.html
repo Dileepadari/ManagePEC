@@ -1,11 +1,18 @@
 {# Shared rendering helpers. #}
 
-{% macro data_table(columns, rows, empty='No rows.') %}
+{# `raw_headers` keeps the column names exactly as the database returned them.
+   The query console and the saved-query page pass it, because there the header
+   is part of the answer; everywhere else the heading is read by people. #}
+{% macro data_table(columns, rows, empty='No rows.', raw_headers=false) %}
   {% if rows %}
     <div class="table-wrap">
       <table>
         <thead>
-          <tr>{% for column in columns %}<th>{{ column }}</th>{% endfor %}</tr>
+          <tr>
+            {% for column in columns %}
+              <th>{{ column if raw_headers else column | column_label }}</th>
+            {% endfor %}
+          </tr>
         </thead>
         <tbody>
           {% for row in rows %}

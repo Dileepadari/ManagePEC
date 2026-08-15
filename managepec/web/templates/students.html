@@ -84,11 +84,13 @@
               <td>{{ student.Attendance | blank }}</td>
               <td>{{ student.Contact }}</td>
               <td>
-                <form class="inline-form" method="post"
+                <form class="row-form" method="post"
                       action="{{ url_for('pec.update_student', student_id=student.Student_ID) }}">
-                  <input name="contact" placeholder="New contact" aria-label="New contact">
-                  <input name="attendance" placeholder="Attendance" inputmode="numeric"
-                         aria-label="New attendance" style="max-width: 110px">
+                  <input class="contact" name="contact" placeholder="New contact"
+                         aria-label="New contact for {{ student.First_Name }} {{ student.Last_Name }}">
+                  <input class="number" name="attendance" placeholder="Attend."
+                         inputmode="numeric"
+                         aria-label="New attendance for {{ student.First_Name }} {{ student.Last_Name }}">
                   <button class="btn secondary" type="submit">Save</button>
                 </form>
               </td>

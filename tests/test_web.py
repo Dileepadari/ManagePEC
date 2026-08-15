@@ -27,8 +27,13 @@ def test_every_page_renders(client, path):
     assert b"ManagePEC" in response.data
 
 
-def test_unknown_page_returns_404(client):
-    assert client.get("/nope").status_code == 404
+def test_unknown_page_returns_the_styled_404(client):
+    """A blueprint-scoped errorhandler would miss this and leak Flask's own page."""
+    response = client.get("/nope")
+    assert response.status_code == 404
+    body = response.get_data(as_text=True)
+    assert "Page not found." in body
+    assert "Back to the dashboard" in body
 
 
 def test_dashboard_shows_the_headline_numbers(client):
@@ -205,12 +210,30 @@ def test_query_console_runs_a_select(client):
     assert "Football" in body
 
 
-def test_query_console_refuses_a_delete(client, conn):
+def test_query_console_warns_that_a_delete_would_change_the_database(client, conn):
     body = client.post("/query", data={"sql": "DELETE FROM SPORTS"}).get_data(
         as_text=True
     )
-    assert "read-only" in body
+    assert "this would have changed the database" in body
+    assert "would change data in the database (DELETE)" in body
     assert conn.scalar("SELECT COUNT(*) FROM SPORTS") == 7
+
+
+def test_query_console_warns_about_ddl(client, conn):
+    body = client.post("/query", data={"sql": "DROP TABLE SPORTS"}).get_data(
+        as_text=True
+    )
+    assert "this would have changed the database" in body
+    assert "would change the database schema (DROP)" in body
+    assert conn.scalar("SELECT COUNT(*) FROM SPORTS") == 7
+
+
+def test_query_console_does_not_shout_about_a_plain_syntax_refusal(client):
+    body = client.post("/query", data={"sql": "EXPLAIN SELECT 1"}).get_data(
+        as_text=True
+    )
+    assert "this would have changed the database" not in body
+    assert "Only SELECT and WITH queries can run here." in body
 
 
 def test_query_console_reports_a_sql_error(client):

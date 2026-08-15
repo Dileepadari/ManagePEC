@@ -35,7 +35,7 @@ managepec/
     __init__.py    create_app, per-request connection
     routes.py      one blueprint, nine pages plus a JSON endpoint
     templates/     base.html + one per page, _macros.html for tables and bars
-    static/        app.css and the three logo variants
+    static/        app.css and the ADK DEV mark
 schema/
   schema.sqlite.sql   DDL, SQLite dialect
   schema.mysql.sql    DDL, MySQL/MariaDB dialect - kept in step by hand
@@ -191,9 +191,16 @@ Two things that have already bitten:
 
 - `.bar-track` and `.bar-fill` are spans inside a grid row and need an explicit
   `display: block`, or `width`/`height` are ignored and the bars disappear.
-- The logo variant rules are scoped `.sidebar .brand .brand-dark`, not
-  `.brand-dark`. Giving `.sidebar .brand img` a `display` of its own out-specifies
-  the variant rules and puts both wordmarks on screen at once.
+- The brand is the ADK DEV **mark** in a tinted badge next to the app name, never
+  the full wordmark - that asset is 476x524 and sizing it by width made it 165px
+  tall, which ate the top of the phone layout. `.logo-mono` recolours it with
+  `brightness(0)` / `brightness(0) invert(1)` so one file reads in both themes.
+- `main` has no `max-width`. Cards and tables want the whole column; only running
+  prose is held to a measure (`78ch`), and `form.stack` is capped at 1180px so a
+  wide window does not stretch a twelve-field form into one row.
+- Table headings go through the `column_label` filter, which turns `Student_ID`
+  into `Student ID`. The query console and saved-query pages pass
+  `raw_headers=true` to `data_table`, because there the column name is the answer.
 
 Charts follow the project data-viz rules: one blue hue for a single-series
 magnitude chart, bars scaled to the largest value in the series rather than to
@@ -301,3 +308,8 @@ control, and do not expose the query console to the open internet.
 - The CLI menu catches broad exceptions per option on purpose, so one bad answer
   does not end the session. That is a UI decision, not a pattern to copy.
 - `data/` is gitignored. `init-db` recreates it.
+- Error handlers use `@bp.app_errorhandler`, not `@bp.errorhandler`. A URL that
+  matches no route belongs to no blueprint, so a blueprint-scoped 404 handler
+  never fires and Flask serves its own unstyled page.
+- `run.py` does not auto-reload with `MANAGEPEC_DEBUG=0`, and Jinja caches
+  templates, so template edits need a restart when debug is off.
