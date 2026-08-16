@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% import "_macros.html" as ui %}
+{% import "_macros.html" as ui with context %}
 
 {% block title %}Sports - ManagePEC{% endblock %}
 {% block heading %}Sports{% endblock %}
@@ -39,7 +39,7 @@
   <h2>All sports</h2>
   <p>Retiring a sport keeps every student, staff and equipment record and clears
      the reference to it.</p>
-  {% if sports %}
+  {% if page.items %}
     <div class="table-wrap">
       <table>
         <thead>
@@ -47,7 +47,7 @@
               <th>Location</th><th></th></tr>
         </thead>
         <tbody>
-          {% for sport in sports %}
+          {% for sport in page.items %}
             <tr>
               <td>{{ sport.Sport_ID }}</td>
               <td>{{ sport.Sport_Name }}</td>
@@ -68,5 +68,6 @@
   {% else %}
     <p class="empty">No sports on the books.</p>
   {% endif %}
+  {{ ui.pager(page, 'pec.sports', {'day': day} if day else {}) }}
 </div>
 {% endblock %}

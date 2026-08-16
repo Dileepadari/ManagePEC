@@ -625,3 +625,88 @@ details summary {
     font-size: 24px;
   }
 }
+
+/* ------------------------------------------------------------------- pager */
+
+/* Three groups on one row when there is space, stacking cleanly when there is
+   not. No auto margins: they eat the free space and push the last group off the
+   edge instead of letting it wrap. */
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 20px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--gridline);
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.pager-count {
+  white-space: nowrap;
+}
+
+.pager-links,
+.pager-size {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.pager-size {
+  gap: 6px;
+}
+
+.pager a,
+.pager .current,
+.pager .disabled,
+.pager .gap {
+  min-width: 30px;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  text-align: center;
+  text-decoration: none;
+}
+
+.pager a {
+  color: var(--accent);
+  border: 1px solid var(--border);
+}
+
+.pager a:hover {
+  background: var(--plane);
+}
+
+.pager .current {
+  background: var(--accent-soft);
+  color: var(--text-primary);
+  border: 1px solid var(--accent);
+  font-weight: 600;
+}
+
+.pager .disabled,
+.pager .gap {
+  color: var(--text-muted);
+  border: 1px solid transparent;
+}
+
+@media (max-width: 620px) {
+  .pager {
+    justify-content: flex-start;
+  }
+  .pager-links {
+    order: 3;
+    width: 100%;
+  }
+}
+
+/* The confirm button on the query console. Solid red, because it is the one
+   control in the app that runs arbitrary SQL against real rows. */
+.btn.danger-solid {
+  background: var(--status-critical);
+  border-color: var(--status-critical);
+  color: #ffffff;
+}

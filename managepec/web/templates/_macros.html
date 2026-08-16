@@ -51,3 +51,57 @@
         else ('critical' if text == 'Needs Repair' else '')) %}
   <span class="status {{ tone }}">{{ text }}</span>
 {% endmacro %}
+
+{# Pager for the list screens. Preserves whatever query args the page already
+   has (a search term, a day filter) so paging never drops a filter. #}
+{% macro pager(page, endpoint, extra={}) %}
+  {% if page.needed %}
+    <div class="pager">
+      <span class="pager-count">
+        {% if page.total %}
+          Showing {{ page.first_index }}-{{ page.last_index }} of {{ page.total }}
+        {% else %}
+          Nothing to show
+        {% endif %}
+      </span>
+
+      <span class="pager-links">
+        {% if page.has_previous %}
+          <a href="{{ url_for(endpoint, page=page.number - 1, per_page=page.per_page, **extra) }}"
+             rel="prev" aria-label="Previous page">Prev</a>
+        {% else %}
+          <span class="disabled">Prev</span>
+        {% endif %}
+
+        {% for n in page.numbers() %}
+          {% if n is none %}
+            <span class="gap">...</span>
+          {% elif n == page.number %}
+            <span class="current" aria-current="page">{{ n }}</span>
+          {% else %}
+            <a href="{{ url_for(endpoint, page=n, per_page=page.per_page, **extra) }}"
+               aria-label="Page {{ n }}">{{ n }}</a>
+          {% endif %}
+        {% endfor %}
+
+        {% if page.has_next %}
+          <a href="{{ url_for(endpoint, page=page.number + 1, per_page=page.per_page, **extra) }}"
+             rel="next" aria-label="Next page">Next</a>
+        {% else %}
+          <span class="disabled">Next</span>
+        {% endif %}
+      </span>
+
+      <span class="pager-size">
+        Per page:
+        {% for size in per_page_choices %}
+          {% if size == page.per_page %}
+            <span class="current">{{ size }}</span>
+          {% else %}
+            <a href="{{ url_for(endpoint, page=1, per_page=size, **extra) }}">{{ size }}</a>
+          {% endif %}
+        {% endfor %}
+      </span>
+    </div>
+  {% endif %}
+{% endmacro %}

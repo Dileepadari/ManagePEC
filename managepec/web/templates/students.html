@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% import "_macros.html" as ui %}
+{% import "_macros.html" as ui with context %}
 
 {% block title %}Students - ManagePEC{% endblock %}
 {% block heading %}Students{% endblock %}
@@ -62,9 +62,9 @@
 </div>
 
 <div class="card">
-  <h2>{{ students | length }} student(s)</h2>
+  <h2>{{ page.total }} student(s)</h2>
   <p>Update a contact number or attendance figure inline.</p>
-  {% if students %}
+  {% if page.items %}
     <div class="table-wrap">
       <table>
         <thead>
@@ -74,7 +74,7 @@
           </tr>
         </thead>
         <tbody>
-          {% for student in students %}
+          {% for student in page.items %}
             <tr>
               <td>{{ student.Student_ID }}</td>
               <td>{{ student.First_Name }} {{ student.Last_Name }}</td>
@@ -102,5 +102,6 @@
   {% else %}
     <p class="empty">No students yet.</p>
   {% endif %}
+  {{ ui.pager(page, 'pec.students') }}
 </div>
 {% endblock %}

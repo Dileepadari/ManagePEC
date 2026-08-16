@@ -28,7 +28,10 @@ originals are kept in this folder as `legacy-phase4-dump.sql` and
 ## Additions
 
 - A validation layer (`managepec/models.py`), shared by the CLI and the web forms.
-- A read-only SQL guard (`managepec/safe_sql.py`) for the ad-hoc console.
+- A SQL guard (`managepec/safe_sql.py`) for the ad-hoc console: reads run, writes
+  are shown and confirmed first, and statement-stacking or server/file access is
+  refused outright.
+- Pagination on every list screen, keeping the active filter.
 - SQLite support so the project runs and tests with no server; MySQL still works.
 - Capacity, attendance, salary and date-order `CHECK` constraints in the schema.
 - Indexes on the columns the application filters and joins on.

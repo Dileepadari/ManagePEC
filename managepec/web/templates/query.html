@@ -3,15 +3,14 @@
 
 {% block title %}Query console - ManagePEC{% endblock %}
 {% block heading %}Query console{% endblock %}
-{% block subheading %}Run a read-only SELECT against the database.{% endblock %}
+{% block subheading %}Run a query against the database.{% endblock %}
 
 {% block content %}
 <div class="card">
   <h2>Statement</h2>
-  <p>One statement at a time, starting with SELECT or WITH. Results are capped
-     at {{ limit }} rows. Anything that would change the database - INSERT,
-     UPDATE, DELETE, DROP and the rest - is refused before it reaches the
-     database and told to you, so nothing here can alter a record.</p>
+  <p>One statement at a time. A SELECT or WITH runs straight away, capped at
+     {{ limit }} rows. Anything that would change the database is shown to you
+     first and only runs once you confirm it.</p>
   <form method="post" action="{{ url_for('pec.query_console') }}">
     <textarea name="sql" spellcheck="false"
               placeholder="SELECT Sport_Name, Capacity FROM SPORTS ORDER BY Capacity DESC">{{ sql }}</textarea>
@@ -22,7 +21,22 @@
   </form>
 </div>
 
-{% if error %}
+{% if pending %}
+  <div class="card callout-warning">
+    <h2><span class="status critical">Not run yet - this will change the database</span></h2>
+    <p>{{ pending.warning }}</p>
+    <pre class="sql">{{ pending.statement }}</pre>
+    <form method="post" action="{{ url_for('pec.query_console') }}"
+          style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+      <input type="hidden" name="sql" value="{{ pending.statement }}">
+      <input type="hidden" name="confirm" value="yes">
+      <button class="btn danger-solid" type="submit">
+        Yes, run this {{ pending.keyword }}
+      </button>
+      <a class="btn secondary" href="{{ url_for('pec.query_console') }}">Cancel</a>
+    </form>
+  </div>
+{% elif error %}
   <div class="card {{ 'callout-warning' if would_change else '' }}">
     <h2>
       {% if would_change %}
@@ -33,13 +47,19 @@
     </h2>
     <p>{{ error }}</p>
   </div>
-{% elif ran %}
+{% elif result and result.kind == 'read' %}
   <div class="card">
     <h2>Result</h2>
-    {{ ui.data_table(columns, rows, 'The query ran and returned no rows.', raw_headers=true) }}
-    {% if truncated %}
+    {{ ui.data_table(result.columns, result.rows,
+                     'The query ran and returned no rows.', raw_headers=true) }}
+    {% if result.truncated %}
       <p class="note">Output was cut off at {{ limit }} rows.</p>
     {% endif %}
+  </div>
+{% elif result %}
+  <div class="card">
+    <h2>Done</h2>
+    <p>{{ result.message }}</p>
   </div>
 {% endif %}
 {% endblock %}

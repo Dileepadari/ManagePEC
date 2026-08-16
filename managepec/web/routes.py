@@ -23,6 +23,7 @@ from flask import (
 from .. import presets as preset_module
 from .. import repository as repo
 from .. import safe_sql
+from ..pagination import PER_PAGE_CHOICES, Page
 from ..models import (
     ChallengeInput,
     StaffInput,
@@ -58,7 +59,12 @@ def column_label(column: str) -> str:
 
 @bp.app_context_processor
 def inject_nav() -> dict[str, object]:
-    return {"nav_items": NAV_ITEMS}
+    return {"nav_items": NAV_ITEMS, "per_page_choices": PER_PAGE_CHOICES}
+
+
+def paged(rows):
+    """Slice `rows` using the ?page and ?per_page args on the current request."""
+    return Page.of(rows, request.args.get("page"), request.args.get("per_page"))
 
 
 NAV_ITEMS = [
@@ -110,7 +116,7 @@ def students():
             flash(str(exc), "error")
     return render_template(
         "students.html",
-        students=repo.list_students(conn),
+        page=paged(repo.list_students(conn)),
         sports=repo.list_sports(conn),
         form=request.form,
     )
@@ -151,7 +157,8 @@ def staff():
             flash(str(exc), "error")
     return render_template(
         "staff.html",
-        staff=repo.list_staff(conn),
+        page=paged(repo.list_staff(conn)),
+        total_staff=len(repo.list_staff(conn)),
         sports=repo.list_sports(conn),
         pending_total=repo.total_pending_salary(conn),
         form=request.form,
@@ -168,7 +175,7 @@ def sports():
     on_day = repo.sports_on_day(conn, day) if day else None
     return render_template(
         "sports.html",
-        sports=repo.list_sports(conn),
+        page=paged(repo.list_sports(conn)),
         enrolment=repo.sport_enrolment(conn),
         day=day,
         on_day=on_day,
@@ -211,7 +218,10 @@ def challenges():
         repo.search_challenges(conn, search) if search else repo.list_challenges(conn)
     )
     return render_template(
-        "challenges.html", challenges=listing, search=search, form=request.form
+        "challenges.html",
+        page=paged(listing),
+        search=search,
+        form=request.form,
     )
 
 
@@ -225,7 +235,7 @@ def equipment():
     serviced = repo.equipment_on_date(conn, on_date) if on_date else None
     return render_template(
         "equipment.html",
-        equipment=repo.equipment_status(conn),
+        page=paged(repo.equipment_status(conn)),
         on_date=on_date,
         serviced=serviced,
     )
@@ -252,16 +262,14 @@ def saved_queries():
     key = request.args.get("key", available[0].key)
     chosen = preset_module.find(conn.dialect, key) or available[0]
 
-    columns, rows, truncated = safe_sql.run(
-        conn, chosen.sql, current_app.config["MAX_QUERY_ROWS"]
-    )
+    result = safe_sql.run(conn, chosen.sql, current_app.config["MAX_QUERY_ROWS"])
     return render_template(
         "saved_queries.html",
         presets=available,
         chosen=chosen,
-        columns=columns,
-        rows=rows,
-        truncated=truncated,
+        columns=result.columns,
+        rows=result.rows,
+        truncated=result.truncated,
     )
 
 
@@ -270,18 +278,25 @@ def saved_queries():
 
 @bp.route("/query", methods=["GET", "POST"])
 def query_console():
+    """Reads run straight away; a write is shown first and run only on confirm."""
     conn = get_db()
     sql = request.form.get("sql", "") if request.method == "POST" else ""
-    columns: list[str] = []
-    rows: list[dict] = []
-    truncated = False
+    confirmed = request.form.get("confirm") == "yes"
+    limit = current_app.config["MAX_QUERY_ROWS"]
+
+    result = None
+    pending = None
     error = None
     would_change = False
 
     if request.method == "POST":
-        limit = current_app.config["MAX_QUERY_ROWS"]
         try:
-            columns, rows, truncated = safe_sql.run(conn, sql, limit)
+            result = safe_sql.run(conn, sql, limit, confirmed=confirmed)
+            if result.message:
+                flash(result.message, "success")
+        except safe_sql.ConfirmationRequired as ask:
+            pending = ask.plan
+            would_change = True
         except safe_sql.UnsafeQuery as exc:
             error = str(exc)
             would_change = exc.changes_database
@@ -292,13 +307,11 @@ def query_console():
     return render_template(
         "query.html",
         sql=sql,
-        columns=columns,
-        rows=rows,
-        truncated=truncated,
+        result=result,
+        pending=pending,
         error=error,
         would_change=would_change,
-        ran=request.method == "POST" and error is None,
-        limit=current_app.config["MAX_QUERY_ROWS"],
+        limit=limit,
     )
 
 

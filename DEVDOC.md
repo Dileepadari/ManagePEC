@@ -28,6 +28,7 @@ managepec/
   db.py            Database, Connection, dialect translation, script splitting
   models.py        input dataclasses and every field validator
   repository.py    every read and write, one function per operation
+  pagination.py    Page, the slice-and-clamp helper behind the list pagers
   presets.py       the saved queries shown on the Pre-Query page
   safe_sql.py      the read-only guard for the ad-hoc console
   cli.py           terminal front end
@@ -156,10 +157,19 @@ Two separate mechanisms, do not confuse them.
    bound. There is no f-string interpolation of user input anywhere. Dialect
    fragments (`month_expr`) are the only thing ever interpolated, and they come
    from a fixed table.
-2. **The ad-hoc console.** `safe_sql.validate` blanks out literals and comments,
-   then requires a single statement opening with SELECT or WITH and containing
-   none of `FORBIDDEN_KEYWORDS`. `safe_sql.run` also caps rows at
-   `MAX_QUERY_ROWS`.
+2. **The ad-hoc console.** `safe_sql.plan` blanks out literals and comments, then
+   classifies the submission:
+
+   | kind | what happens |
+   |---|---|
+   | `read` | runs, capped at `MAX_QUERY_ROWS` |
+   | `changes-data` / `changes-schema` | `run` raises `ConfirmationRequired` carrying the warning; it runs only when called again with `confirmed=True` |
+   | `changes-state` | never runs - ATTACH, INTO OUTFILE, GRANT and friends escape the database rather than change it, so no confirmation unlocks them |
+   | multiple statements | never runs - a second statement cannot be reviewed on its own |
+
+   `safe_sql.validate` is the strict read-only wrapper, used by the saved-query
+   page where a write is never acceptable. The two-step means the console can do
+   real work without a write ever happening by accident.
 
 `LIKE` searches go through `repository.like_contains`, which escapes `%`, `_`
 and the escape character and pairs with `ESCAPE '!'`. Binding a parameter stops
@@ -308,6 +318,11 @@ control, and do not expose the query console to the open internet.
 - The CLI menu catches broad exceptions per option on purpose, so one bad answer
   does not end the session. That is a UI decision, not a pattern to copy.
 - `data/` is gitignored. `init-db` recreates it.
+- Templates that call a macro needing a context processor value must import it
+  `with context` (`{% import "_macros.html" as ui with context %}`). Without it
+  the value is silently empty - the pager's page-size links vanished this way.
+- Pagination slices in Python (`managepec/pagination.py`), not in SQL. Honest at
+  these row counts; past a few thousand rows move LIMIT/OFFSET into the query.
 - Error handlers use `@bp.app_errorhandler`, not `@bp.errorhandler`. A URL that
   matches no route belongs to no blueprint, so a blueprint-scoped 404 handler
   never fires and Flask serves its own unstyled page.

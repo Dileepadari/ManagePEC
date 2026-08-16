@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% import "_macros.html" as ui %}
+{% import "_macros.html" as ui with context %}
 
 {% block title %}Challenges - ManagePEC{% endblock %}
 {% block heading %}Fitness challenges{% endblock %}
@@ -85,11 +85,12 @@
   {% if search %}
     {{ ui.data_table(
         ['Challenge_ID', 'Challenge_Name', 'From_Date', 'To_Date', 'Registration_Deadline'],
-        challenges, 'Nothing matched that name.') }}
+        page.items, 'Nothing matched that name.') }}
   {% else %}
     {{ ui.data_table(
         ['Challenge_ID', 'Challenge_Name', 'From_Date', 'To_Date', 'Sections'],
-        challenges, 'No challenges yet.') }}
+        page.items, 'No challenges yet.') }}
   {% endif %}
+  {{ ui.pager(page, 'pec.challenges', {'q': search} if search else {}) }}
 </div>
 {% endblock %}

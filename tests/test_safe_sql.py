@@ -62,9 +62,9 @@ def test_a_write_says_it_would_change_data(sql, keyword):
         validate(sql)
     assert exc.value.kind == "changes-data"
     assert exc.value.changes_database is True
-    assert "would change data in the database" in str(exc.value)
+    assert "will change data in the database" in str(exc.value)
     assert keyword in str(exc.value)
-    assert "nothing was run" in str(exc.value)
+    assert "has not been run yet" in str(exc.value)
 
 
 @pytest.mark.parametrize(
@@ -76,7 +76,7 @@ def test_ddl_says_it_would_change_the_schema(sql):
         validate(sql)
     assert exc.value.kind == "changes-schema"
     assert exc.value.changes_database is True
-    assert "would change the database schema" in str(exc.value)
+    assert "will change the database schema" in str(exc.value)
 
 
 @pytest.mark.parametrize("sql", ["PRAGMA table_info(SPORTS)", "ATTACH DATABASE 'x' AS y"])
@@ -129,21 +129,15 @@ def test_strip_literals_blanks_block_comments():
 
 
 def test_run_returns_columns_and_rows(conn):
-    columns, rows, truncated = safe_sql.run(
+    result = safe_sql.run(
         conn, "SELECT Sport_ID, Sport_Name FROM SPORTS ORDER BY Sport_ID", 100
     )
-    assert columns == ["Sport_ID", "Sport_Name"]
-    assert rows[0]["Sport_Name"] == "Football"
-    assert truncated is False
+    assert result.columns == ["Sport_ID", "Sport_Name"]
+    assert result.rows[0]["Sport_Name"] == "Football"
+    assert result.truncated is False
 
 
 def test_run_caps_the_row_count(conn):
-    _columns, rows, truncated = safe_sql.run(conn, "SELECT * FROM SPORTS", 2)
-    assert len(rows) == 2
-    assert truncated is True
-
-
-def test_run_refuses_a_write(conn):
-    with pytest.raises(UnsafeQuery):
-        safe_sql.run(conn, "DELETE FROM SPORTS", 10)
-    assert conn.scalar("SELECT COUNT(*) FROM SPORTS") == 7
+    result = safe_sql.run(conn, "SELECT * FROM SPORTS", 2)
+    assert len(result.rows) == 2
+    assert result.truncated is True

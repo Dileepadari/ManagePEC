@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% import "_macros.html" as ui %}
+{% import "_macros.html" as ui with context %}
 
 {% block title %}Equipment - ManagePEC{% endblock %}
 {% block heading %}Equipment{% endblock %}
@@ -27,7 +27,7 @@
   <h2>Inventory</h2>
   <p>Status comes from the latest maintenance entry. Retiring an item keeps the
      funding record it was bought with.</p>
-  {% if equipment %}
+  {% if page.items %}
     <div class="table-wrap">
       <table>
         <thead>
@@ -35,7 +35,7 @@
               <th>Last checked</th><th>Status</th><th></th></tr>
         </thead>
         <tbody>
-          {% for item in equipment %}
+          {% for item in page.items %}
             <tr>
               <td>{{ item.Equipment_ID }}</td>
               <td>{{ item.Equipment_Name }}</td>
@@ -57,5 +57,6 @@
   {% else %}
     <p class="empty">No equipment on record.</p>
   {% endif %}
+  {{ ui.pager(page, 'pec.equipment', {'date': on_date} if on_date else {}) }}
 </div>
 {% endblock %}

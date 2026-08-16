@@ -106,10 +106,24 @@ it doubles as a worked example.
 
 ### Query console
 
-Run your own SELECT against the database. One statement at a time, starting with
-SELECT or WITH; writes, DDL and anything that touches the server are refused
-before they reach the driver, and results are capped. It is a reading tool, not
-an admin console.
+Run your own SQL against the database. A SELECT or WITH runs straight away, with
+the row count capped.
+
+Anything that would change the database is never run on the first press. The
+statement is shown back to you with what it would do - "This will change data in
+the database (UPDATE)" - and runs only when you press the confirm button. So the
+console can do real work when you are sure, and nothing is written by accident.
+
+Two things stay refused outright, and no confirmation unlocks them: more than
+one statement at a time, and anything touching server, session or file state
+(ATTACH, INTO OUTFILE, GRANT), which escapes the database rather than changing
+it.
+
+### Lists and paging
+
+Students, staff, sports, challenges and equipment are paged, 25 rows at a time
+by default, switchable to 10, 50 or 100. Paging keeps whatever filter or search
+you had, so you never lose your place.
 
 ### Analysis
 

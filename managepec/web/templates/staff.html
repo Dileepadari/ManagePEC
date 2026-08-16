@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% import "_macros.html" as ui %}
+{% import "_macros.html" as ui with context %}
 
 {% block title %}Staff - ManagePEC{% endblock %}
 {% block heading %}Staff{% endblock %}
@@ -7,7 +7,7 @@
 
 {% block content %}
 <div class="tiles">
-  <div class="tile"><div class="label">Staff</div><div class="value">{{ staff | length }}</div></div>
+  <div class="tile"><div class="label">Staff</div><div class="value">{{ total_staff }}</div></div>
   <div class="tile"><div class="label">Pending salary</div><div class="value">{{ pending_total }}</div></div>
 </div>
 
@@ -87,7 +87,8 @@
   {{ ui.data_table(
       ['Staff_ID', 'First_Name', 'Last_Name', 'Position', 'Sport_Name', 'Type',
        'Total_Salary', 'Pending_Salary', 'Contact'],
-      staff,
+      page.items,
       'No staff on the books.') }}
+  {{ ui.pager(page, 'pec.staff') }}
 </div>
 {% endblock %}

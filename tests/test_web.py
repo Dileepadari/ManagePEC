@@ -214,8 +214,8 @@ def test_query_console_warns_that_a_delete_would_change_the_database(client, con
     body = client.post("/query", data={"sql": "DELETE FROM SPORTS"}).get_data(
         as_text=True
     )
-    assert "this would have changed the database" in body
-    assert "would change data in the database (DELETE)" in body
+    assert "this will change the database" in body.lower()
+    assert "will change data in the database (DELETE)" in body
     assert conn.scalar("SELECT COUNT(*) FROM SPORTS") == 7
 
 
@@ -223,8 +223,8 @@ def test_query_console_warns_about_ddl(client, conn):
     body = client.post("/query", data={"sql": "DROP TABLE SPORTS"}).get_data(
         as_text=True
     )
-    assert "this would have changed the database" in body
-    assert "would change the database schema (DROP)" in body
+    assert "this will change the database" in body.lower()
+    assert "will change the database schema (DROP)" in body
     assert conn.scalar("SELECT COUNT(*) FROM SPORTS") == 7
 
 
@@ -232,8 +232,8 @@ def test_query_console_does_not_shout_about_a_plain_syntax_refusal(client):
     body = client.post("/query", data={"sql": "EXPLAIN SELECT 1"}).get_data(
         as_text=True
     )
-    assert "this would have changed the database" not in body
-    assert "Only SELECT and WITH queries can run here." in body
+    assert "will change the database" not in body.lower()
+    assert "is not something this console runs" in body
 
 
 def test_query_console_reports_a_sql_error(client):
