@@ -18,7 +18,10 @@
 <div class="grid">
   <div class="card">
     <h2>Enrolment per sport</h2>
-    <p>Students assigned. Bars are scaled to the largest roster ({{ max_enrolled }}).</p>
+    <p>Students assigned, busiest first.
+       {%- if enrolment_total > chart_rows %}
+         Showing the top {{ chart_rows }} of {{ enrolment_total }} sports.
+       {%- endif %}</p>
     {% if enrolment %}
       {{ ui.bar_chart(enrolment, 'Sport_Name', 'Enrolled', max_enrolled) }}
       <p class="note">Average across all sports: {{ average }} students.</p>

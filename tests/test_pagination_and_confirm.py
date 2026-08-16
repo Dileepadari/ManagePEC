@@ -147,3 +147,38 @@ def test_paging_keeps_the_filter(client, conn):
     body = client.get("/challenges?q=Challenge&per_page=10").get_data(as_text=True)
     assert "q=Challenge" in body
     assert "of 18" in body
+
+
+# --------------------------------------------------------------- chart limits
+
+
+def _add_sports(conn, count):
+    for n in range(50, 50 + count):
+        conn.execute(
+            "INSERT INTO SPORTS (Sport_ID, Sport_Name, Capacity, No_of_Participants) "
+            "VALUES (?, ?, 30, 0)",
+            (n, f"Extra Sport {n}"),
+        )
+    conn.commit()
+
+
+def test_enrolment_chart_is_capped_and_says_so(client, conn):
+    """A bar per sport stops being readable long before the table does."""
+    _add_sports(conn, 20)
+
+    for path in ("/", "/sports"):
+        body = client.get(path).get_data(as_text=True)
+        assert "top 10 of 27" in body
+        assert "Extra Sport 69" not in body
+
+
+def test_chart_note_is_absent_when_everything_fits(client):
+    for path in ("/", "/sports"):
+        assert "top 10 of" not in client.get(path).get_data(as_text=True)
+
+
+def test_sports_table_still_lists_everything_through_the_pager(client, conn):
+    _add_sports(conn, 20)
+    body = client.get("/sports?per_page=100").get_data(as_text=True)
+    assert "Extra Sport 69" in body
+    assert "of 27" in body

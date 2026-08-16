@@ -26,10 +26,12 @@
 
 <div class="card">
   <h2>Enrolment against capacity</h2>
-  <p>Bars are scaled to the largest roster; the table below has the capacity figures.</p>
+  <p>Busiest first; the table below has every sport with its capacity.
+     {%- if enrolment_total > chart_rows %}
+       Showing the top {{ chart_rows }} of {{ enrolment_total }}.
+     {%- endif %}</p>
   {% if enrolment %}
-    {{ ui.bar_chart(enrolment, 'Sport_Name', 'Enrolled',
-                    (enrolment | map(attribute='Enrolled') | max) or 1) }}
+    {{ ui.bar_chart(enrolment, 'Sport_Name', 'Enrolled', max_enrolled) }}
   {% else %}
     <p class="empty">No sports on the books.</p>
   {% endif %}

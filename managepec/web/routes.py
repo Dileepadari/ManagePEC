@@ -67,6 +67,11 @@ def paged(rows):
     return Page.of(rows, request.args.get("page"), request.args.get("per_page"))
 
 
+# A bar chart stops being readable long before a table does, so the enrolment
+# charts show the busiest sports and say how many they left out.
+CHART_ROWS = 10
+
+
 NAV_ITEMS = [
     ("pec.dashboard", "Dashboard"),
     ("pec.students", "Students"),
@@ -91,9 +96,10 @@ def dashboard():
     return render_template(
         "dashboard.html",
         counts=repo.summary_counts(conn),
-        enrolment=enrolment,
+        enrolment=enrolment[:CHART_ROWS],
+        enrolment_total=len(enrolment),
+        chart_rows=CHART_ROWS,
         max_enrolled=max((row["Enrolled"] for row in enrolment), default=0) or 1,
-        max_capacity=max((row["Capacity"] for row in enrolment), default=1),
         funds=funds,
         max_fund=max((row["Total"] for row in funds), default=1),
         unassigned=repo.unassigned_students(conn),
@@ -173,10 +179,14 @@ def sports():
     conn = get_db()
     day = request.args.get("day", "").strip().upper()
     on_day = repo.sports_on_day(conn, day) if day else None
+    enrolment = repo.sport_enrolment(conn)
     return render_template(
         "sports.html",
         page=paged(repo.list_sports(conn)),
-        enrolment=repo.sport_enrolment(conn),
+        enrolment=enrolment[:CHART_ROWS],
+        enrolment_total=len(enrolment),
+        chart_rows=CHART_ROWS,
+        max_enrolled=max((row["Enrolled"] for row in enrolment), default=0) or 1,
         day=day,
         on_day=on_day,
     )
